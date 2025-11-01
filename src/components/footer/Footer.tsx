@@ -1,15 +1,16 @@
 const Footer = () => {
   return (
-    <div className="text-center my-3">
+    <footer className="text-center my-3 text-sm text-gray-700 dark:text-white">
       Designed & developed by{" "}
       <a
-        href="https://tailadmin.com/"
+        href="https://zlliq.com/"
         target="_blank"
-        className="text-blue-600"
+        rel="noopener noreferrer"
+        className="text-blue-600 hover:text-blue-400 transition-colors"
       >
         Zlliq Technology
       </a>
-    </div>
+    </footer>
   );
 };
 
