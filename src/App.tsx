@@ -9,6 +9,8 @@ import DedicatedIP from "./pages/Static/ip";
 import Templates from "./pages/Static/Templates";
 import NotFound from "./pages/OtherPage/NotFound";
 import Domains from "./pages/Domains";
+import Suppressions from "./pages/Suppressions";
+import SuppressionDetailsPage from "./pages/Suppressions/DetailsPage";
 
 function App() {
   return (
@@ -25,6 +27,17 @@ function App() {
           <Route path="dedicated-ip" element={<DedicatedIP />} />
           <Route path="templates" element={<Templates />} />
           <Route path="signin" element={<SignIn />} />
+          <Route path="suppressions" element={<Suppressions />} />
+          <Route
+            path="suppressions/details"
+            element={
+              <SuppressionDetailsPage
+                onBack={function (): void {
+                  throw new Error("Function not implemented.");
+                }}
+              />
+            }
+          />
           <Route path="404" element={<NotFound />} />
         </Route>
       </Routes>

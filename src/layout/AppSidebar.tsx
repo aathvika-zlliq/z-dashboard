@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { Link, useLocation } from "react-router";
-import { FileText, Globe, Server, Settings } from "lucide-react";
+import { FileText, Globe, Server, Settings, BellOff } from "lucide-react";
 
 // Import your icons
 import {
@@ -56,6 +56,11 @@ const navItems: NavItem[] = [
     icon: <Globe className="size-5" />,
     name: "Domains",
     path: "/domains",
+  },
+  {
+    icon: <BellOff className="size-5" />,
+    name: "Suppressions",
+    path: "/suppressions",
   },
 ];
 
