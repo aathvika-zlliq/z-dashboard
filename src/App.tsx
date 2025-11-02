@@ -11,6 +11,7 @@ import NotFound from "./pages/OtherPage/NotFound";
 import Domains from "./pages/Domains";
 import Suppressions from "./pages/Suppressions";
 import SuppressionDetailsPage from "./pages/Suppressions/DetailsPage";
+import NotificationsPage from "./pages/OtherPage/Notifications";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
           <Route path="templates" element={<Templates />} />
           <Route path="signin" element={<SignIn />} />
           <Route path="suppressions" element={<Suppressions />} />
+          <Route path="notifications" element={<NotificationsPage />} />
           <Route
             path="suppressions/details"
             element={

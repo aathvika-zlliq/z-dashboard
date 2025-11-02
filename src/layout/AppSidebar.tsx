@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { Link, useLocation } from "react-router";
-import { FileText, Globe, Server, Settings, BellOff } from "lucide-react";
+import { FileText, Globe, Server, Settings, BellOff, Bell } from "lucide-react";
 import BrandWhiteLogo from "../assets/images/brand/zlliq-white-logo.png";
 import BrandDarkLogo from "../assets/images/brand/zlliq-dark-logo.png";
 import CollapsedIcon from "../../favicon.png";
@@ -32,15 +32,20 @@ const navItems: NavItem[] = [
     path: "/templates",
   },
   {
+    icon: <BellOff className="size-5" />,
+    name: "Suppressions",
+    path: "/suppressions",
+  },
+  {
     icon: <Server className="size-5" />,
     name: "Dedicated IP",
     path: "/dedicated-ip",
   },
   { icon: <Globe className="size-5" />, name: "Domains", path: "/domains" },
   {
-    icon: <BellOff className="size-5" />,
-    name: "Suppressions",
-    path: "/suppressions",
+    icon: <Bell className="size-5" />,
+    name: "Notifications",
+    path: "/notifications",
   },
 ];
 
@@ -138,33 +143,26 @@ const AppSidebar: React.FC = () => {
         </Link>
       </div>
 
-      {/* ---------- Navigation + Settings ---------- */}
-      <div className="flex flex-col justify-between flex-grow overflow-y-auto duration-300 ease-linear no-scrollbar">
-        {/* ---------- Top Menu ---------- */}
-        <nav className="mb-4">
-          <div className="flex flex-col gap-4">
-            <div>
-              <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 dark:text-gray-500 ${
-                  !isExpanded && !isHovered
-                    ? "lg:justify-center"
-                    : "justify-start"
-                }`}
-              >
-                {isExpanded || isHovered || isMobileOpen ? (
-                  "Menu"
-                ) : (
-                  <HorizontaLDots className="size-6" />
-                )}
-              </h2>
+      {/* ---------- Navigation Container ---------- */}
+      <div className="flex flex-col flex-grow min-h-0">
+        {/* ---------- Scrollable Menu ---------- */}
+        <div className="flex-1 overflow-y-auto no-scrollbar pb-4">
+          <h2
+            className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 dark:text-gray-500 ${
+              !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
+            }`}
+          >
+            {isExpanded || isHovered || isMobileOpen ? (
+              "Menu"
+            ) : (
+              <HorizontaLDots className="size-6" />
+            )}
+          </h2>
+          {renderMenuItems(navItems)}
+        </div>
 
-              {renderMenuItems(navItems)}
-            </div>
-          </div>
-        </nav>
-
-        {/* ---------- Settings ---------- */}
-        <div className="border-t border-gray-200 dark:border-gray-800 py-4">
+        {/* ---------- Sticky Settings ---------- */}
+        <div className="border-t border-gray-200 dark:border-gray-800 py-4 sticky bottom-0 bg-white dark:bg-gray-900">
           <Link
             to="/settings"
             className={`menu-item group ${
