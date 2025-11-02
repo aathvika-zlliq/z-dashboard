@@ -3,6 +3,7 @@ import { Outlet } from "react-router";
 import AppHeader from "./AppHeader";
 import Backdrop from "./Backdrop";
 import AppSidebar from "./AppSidebar";
+import Footer from "../components/footer/Footer"; // ✅ import Footer
 
 const LayoutContent: React.FC = () => {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
@@ -13,15 +14,22 @@ const LayoutContent: React.FC = () => {
         <AppSidebar />
         <Backdrop />
       </div>
+
       <div
-        className={`flex-1 transition-all duration-300 ease-in-out ${
+        className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
           isExpanded || isHovered ? "lg:ml-[290px]" : "lg:ml-[90px]"
         } ${isMobileOpen ? "ml-0" : ""}`}
       >
+        {/* Header */}
         <AppHeader />
-        <div className="p-4 mx-auto max-w-screen-2xl md:p-6">
+
+        {/* Main Content */}
+        <main className="flex-1 p-4 mx-auto max-w-screen-2xl md:p-6">
           <Outlet />
-        </div>
+        </main>
+
+        {/* ✅ Footer */}
+        <Footer />
       </div>
     </div>
   );

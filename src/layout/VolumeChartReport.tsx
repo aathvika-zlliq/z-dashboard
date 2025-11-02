@@ -1,57 +1,30 @@
 import React from "react";
 import ReactApexChart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
+import { motion } from "framer-motion";
+import { BarChart3 } from "lucide-react";
 
-// ===================================================
-// 1. DATA DEFINITIONS
-// ===================================================
+const DEFAULT_CATEGORIES: string[] = Array.from(
+  { length: 23 },
+  (_, i) => `Day ${i + 1}`
+);
 
-// Define the X-axis categories (estimated 23 time points)
-const DEFAULT_CATEGORIES: string[] = [
-  "Day 1",
-  "Day 2",
-  "Day 3",
-  "Day 4",
-  "Day 5",
-  "Day 6",
-  "Day 7",
-  "Day 8",
-  "Day 9",
-  "Day 10",
-  "Day 11",
-  "Day 12",
-  "Day 13",
-  "Day 14",
-  "Day 15",
-  "Day 16",
-  "Day 17",
-  "Day 18",
-  "Day 19",
-  "Day 20",
-  "Day 21",
-  "Day 22",
-  "Day 23",
-];
-
-// Define the custom colors extracted from the Highcharts SVG
 const seriesColors: string[] = [
-  "#5EB389", // Submitted
-  "#57B657", // Delivered
-  "#626ED6", // Opened (Custom Color for visibility)
-  "#4CAF50", // Clicked (Custom Color for visibility)
-  "#E29F51", // Unsubscribed
-  "#9C27B0", // Bounced (Custom Color for visibility)
-  "#FF6566", // Complaints
+  "#5EB389",
+  "#57B657",
+  "#626ED6",
+  "#4CAF50",
+  "#E29F51",
+  "#9C27B0",
+  "#FF6566",
 ];
 
-// Define the series data structure
 interface ChartSeries {
   name: string;
   data: number[];
   enabled?: boolean;
 }
 
-// Define the complete series data with initial filtering (enabled: false for hidden)
 const allSeriesData: ChartSeries[] = [
   {
     name: "Submitted",
@@ -69,42 +42,20 @@ const allSeriesData: ChartSeries[] = [
     ],
     enabled: true,
   },
-
-  // Hidden on load based on SVG's 'highcharts-legend-item-hidden'
-  {
-    name: "Opened",
-    data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    enabled: false,
-  },
-  {
-    name: "Clicked",
-    data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    enabled: false,
-  },
-
+  { name: "Opened", data: Array(23).fill(0), enabled: false },
+  { name: "Clicked", data: Array(23).fill(0), enabled: false },
   {
     name: "Unsubscribed",
     data: [1, 2, 0, 1, 0, 0, 0, 1, 2, 3, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     enabled: true,
   },
-
-  // Hidden on load
-  {
-    name: "Bounced",
-    data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    enabled: false,
-  },
-
+  { name: "Bounced", data: Array(23).fill(0), enabled: false },
   {
     name: "Complaints",
     data: [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     enabled: true,
   },
 ];
-
-// ===================================================
-// 2. COMPONENT INTERFACE & DEFINITION
-// ===================================================
 
 interface VolumeReportChartProps {
   series?: ChartSeries[];
@@ -114,105 +65,98 @@ interface VolumeReportChartProps {
 
 const VolumeReportChart: React.FC<VolumeReportChartProps> = ({
   series = allSeriesData,
-  // 💡 FIX: Renaming the local variable to avoid the 'ReferenceError'
   categories: chartCategories = DEFAULT_CATEGORIES,
   title = "Volume Report",
 }) => {
-  // 3. ApexCharts Configuration Options
   const options: ApexOptions = {
     chart: {
       type: "line",
       height: 400,
-      fontFamily: "inherit",
-      toolbar: {
-        show: false,
-      },
-      zoom: {
-        enabled: false,
-      },
+      toolbar: { show: false },
+      zoom: { enabled: false },
+      fontFamily: "Inter, sans-serif",
     },
     colors: seriesColors,
-    dataLabels: {
-      enabled: false,
-    },
-    stroke: {
-      curve: "smooth",
-      width: 2,
-    },
+    dataLabels: { enabled: false },
+    stroke: { curve: "smooth", width: 2.5 },
     markers: {
       size: 4,
-      hover: {
-        sizeOffset: 3,
-      },
+      hover: { sizeOffset: 3 },
       strokeColors: "#fff",
-    },
-    title: {
-      text: title,
-      align: "left",
-      style: {
-        fontSize: "16px",
-        fontWeight: "600",
-        color: "#333",
-      },
+      strokeWidth: 2,
     },
     grid: {
-      borderColor: "#e7e7e7",
-      row: {
-        colors: ["#f3f3f3", "transparent"],
-        opacity: 0.5,
-      },
-      padding: {
-        left: 0,
-        right: 0,
-      },
+      borderColor: "rgba(0,0,0,0.05)",
+      strokeDashArray: 3,
+      padding: { left: 10, right: 10 },
     },
     xaxis: {
-      // Use the renamed prop variable here
       categories: chartCategories,
-      title: {
-        text: "Time Point",
-      },
-      labels: {
-        style: {
-          fontSize: "12px",
-        },
-      },
+      labels: { style: { fontSize: "12px", colors: "#6b7280" } },
+      axisBorder: { show: false },
     },
     yaxis: {
       title: {
         text: "Count",
-        style: {
-          fontSize: "14px",
-          color: "#656575",
-        },
+        style: { fontSize: "13px", color: "#6b7280" },
       },
+      labels: { style: { colors: "#6b7280" } },
       min: 0,
-    },
-    tooltip: {
-      x: {
-        show: false,
-      },
     },
     legend: {
       position: "bottom",
       horizontalAlign: "center",
-      fontSize: "12px",
-      fontWeight: "500",
-      fontFamily: "inherit",
+      fontSize: "13px",
+      fontWeight: 500,
+      labels: { colors: "#6b7280" },
+      itemMargin: { horizontal: 10, vertical: 5 },
+    },
+    tooltip: {
+      theme: "light",
+      style: { fontSize: "13px" },
     },
   };
 
   return (
-    <div className="chart-container">
-           {" "}
-      <ReactApexChart
-        options={options}
-        series={series}
-        type="line"
-        height={400}
-      />
-         {" "}
-    </div>
+    <motion.div
+      initial={{ opacity: 0, y: 25 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.7, ease: "easeOut" }}
+      className="relative w-full rounded-3xl overflow-hidden border border-gray-100 dark:border-white/10 shadow-md hover:shadow-lg transition-shadow duration-300 p-6 sm:p-8 bg-gradient-to-br from-white to-gray-50 dark:from-gray-950 dark:to-gray-900"
+    >
+      {/* Background grid pattern */}
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle,_#e5e7eb_1px,_transparent_1px)] [background-size:36px_36px] dark:bg-[radial-gradient(circle,_rgba(255,255,255,0.05)_1px,_transparent_1px)]"></div>
+
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="flex items-center justify-between mb-6"
+      >
+        <div className="flex items-center gap-3">
+          <motion.div
+            animate={{ rotate: [0, -10, 10, 0] }}
+            transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
+          >
+            <BarChart3 className="w-6 h-6 text-blue-500 dark:text-blue-400" />
+          </motion.div>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
+            {title}
+          </h2>
+        </div>
+      </motion.div>
+
+      {/* Chart */}
+      <div className="relative">
+        <ReactApexChart
+          options={options}
+          series={series}
+          type="line"
+          height={400}
+        />
+      </div>
+    </motion.div>
   );
 };
 

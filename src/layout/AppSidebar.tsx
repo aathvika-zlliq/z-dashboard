@@ -5,7 +5,6 @@ import BrandWhiteLogo from "../assets/images/brand/zlliq-white-logo.png";
 import BrandDarkLogo from "../assets/images/brand/zlliq-dark-logo.png";
 import CollapsedIcon from "../../favicon.png";
 
-// Import your icons
 import {
   GridIcon,
   CalenderIcon,
@@ -16,14 +15,12 @@ import {
 
 import { useSidebar } from "../context/SidebarContext";
 
-// Define the menu item type
 type NavItem = {
   name: string;
   icon: React.ReactNode;
   path: string;
 };
 
-// ✅ Main nav items
 const navItems: NavItem[] = [
   { icon: <GridIcon />, name: "Dashboard", path: "/dashboard" },
   { icon: <CalenderIcon />, name: "Live Analytics", path: "/live-feed" },
@@ -89,7 +86,7 @@ const AppSidebar: React.FC = () => {
     <aside
       className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 dark:text-gray-100 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
         ${
-          isExpanded || isMobileOpen
+          isExpanded || isHovered || isMobileOpen
             ? "w-[290px]"
             : isHovered
             ? "w-[290px]"
@@ -102,46 +99,49 @@ const AppSidebar: React.FC = () => {
     >
       {/* ---------- Logo Section ---------- */}
       <div
-        className={`py-8 flex ${
+        className={`py-6 flex ${
           !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
         }`}
       >
         <Link to="/dashboard" className="flex items-center">
-          {isExpanded || isHovered || isMobileOpen ? (
-            <>
-              {/* Light Theme Logo */}
+          {/* Hide logo on mobile */}
+          <div className="hidden md:flex items-center">
+            {isExpanded || isHovered || isMobileOpen ? (
+              <>
+                {/* Light Theme Logo */}
+                <img
+                  src={BrandDarkLogo}
+                  alt="Zlliq Logo"
+                  width={130}
+                  height={35}
+                  className="transition-all bg-white duration-300 block dark:hidden"
+                />
+                {/* Dark Theme Logo */}
+                <img
+                  src={BrandWhiteLogo}
+                  alt="Zlliq Logo Dark"
+                  width={130}
+                  height={35}
+                  className="transition-all duration-300 hidden dark:block"
+                />
+              </>
+            ) : (
               <img
-                src={BrandDarkLogo}
-                alt="Zlliq Logo"
-                width={150}
-                height={40}
-                className="transition-all bg-white duration-300 block dark:hidden"
+                src={CollapsedIcon}
+                alt="Zlliq Icon"
+                width={32}
+                height={32}
+                className="transition-all duration-300"
               />
-              {/* Dark Theme Logo */}
-              <img
-                src={BrandWhiteLogo}
-                alt="Zlliq Logo Dark"
-                width={150}
-                height={40}
-                className="transition-all duration-300 hidden dark:block"
-              />
-            </>
-          ) : (
-            <img
-              src={CollapsedIcon}
-              alt="Zlliq Icon"
-              width={40}
-              height={40}
-              className="transition-all duration-300"
-            />
-          )}
+            )}
+          </div>
         </Link>
       </div>
 
-      {/* ---------- Navigation + Settings Wrapper ---------- */}
+      {/* ---------- Navigation + Settings ---------- */}
       <div className="flex flex-col justify-between flex-grow overflow-y-auto duration-300 ease-linear no-scrollbar">
         {/* ---------- Top Menu ---------- */}
-        <nav className="mb-6">
+        <nav className="mb-4">
           <div className="flex flex-col gap-4">
             <div>
               <h2
@@ -163,8 +163,8 @@ const AppSidebar: React.FC = () => {
           </div>
         </nav>
 
-        {/* ---------- Settings at Bottom ---------- */}
-        <div className="border-t border-gray-200 dark:border-gray-800 py-6">
+        {/* ---------- Settings ---------- */}
+        <div className="border-t border-gray-200 dark:border-gray-800 py-4">
           <Link
             to="/settings"
             className={`menu-item group ${
