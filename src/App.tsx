@@ -12,6 +12,8 @@ import Domains from "./pages/Domains";
 import Suppressions from "./pages/Suppressions";
 import SuppressionDetailsPage from "./pages/Suppressions/DetailsPage";
 import NotificationsPage from "./pages/OtherPage/Notifications";
+import APISettings from "./pages/API";
+import SettingsPage from "./pages/Settings";
 
 function App() {
   return (
@@ -30,6 +32,8 @@ function App() {
           <Route path="signin" element={<SignIn />} />
           <Route path="suppressions" element={<Suppressions />} />
           <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="api" element={<APISettings />} />
+          <Route path="settings" element={<SettingsPage />} />
           <Route
             path="suppressions/details"
             element={
