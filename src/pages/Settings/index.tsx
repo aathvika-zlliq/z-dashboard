@@ -1,3 +1,98 @@
+// import React, { useState } from "react";
+// import { Users, Mail, Clock, Bell, Shield } from "lucide-react";
+
+// // --- Import the new content components ---
+// import ManageUsersSection from "./ManageUsersSection";
+// import ContentSettingSection from "./ContentSettingSection";
+// import SendingLimitsSection from "./SendingLimitsSection";
+// import NotificationSection from "./NotificationSection";
+// import IPRestrictionsSection from "./IPRestrictionsSection";
+// // ------------------------------------------
+
+// export type SettingTab =
+//   | "users"
+//   | "contentSetting"
+//   | "emailLimit"
+//   | "notification"
+//   | "allowedIp";
+
+// const tabMap: { value: SettingTab; label: string; icon: React.ElementType }[] =
+//   [
+//     { value: "users", label: "Manage Users", icon: Users },
+//     { value: "contentSetting", label: "Content Setting", icon: Mail },
+//     { value: "emailLimit", label: "Sending limits", icon: Clock },
+//     { value: "notification", label: "Notification", icon: Bell },
+//     { value: "allowedIp", label: "IP Restrictions", icon: Shield },
+//   ];
+
+// const SettingsPage: React.FC = () => {
+//   const [activeTab, setActiveTab] = useState<SettingTab>("users");
+
+//   const renderContent = () => {
+//     switch (activeTab) {
+//       case "users":
+//         return <ManageUsersSection />;
+//       case "contentSetting":
+//         return <ContentSettingSection />;
+//       case "emailLimit":
+//         return <SendingLimitsSection />;
+//       case "notification":
+//         return <NotificationSection />;
+//       case "allowedIp":
+//         return <IPRestrictionsSection />;
+//       default:
+//         return <ManageUsersSection />;
+//     }
+//   };
+
+//   return (
+//     <div className="flex flex-col md:flex-row gap-6 p-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
+//       {/* 1. Vertical Tab Navigation */}
+//       <div
+//         role="tablist"
+//         aria-orientation="vertical"
+//         className="w-full md:w-64 flex-shrink-0 bg-white dark:bg-gray-800 rounded-xl  p-3 space-y-1 border border-gray-200 dark:border-gray-700"
+//       >
+//         <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100 p-2 mb-2 border-b dark:border-gray-700">
+//           Domain Settings
+//         </h3>
+//         {tabMap.map((tab, index) => {
+//           const isActive = activeTab === tab.value;
+//           const Icon = tab.icon;
+//           return (
+//             <button
+//               key={tab.value}
+//               data-atm={tab.value}
+//               className={`
+//                 flex items-center gap-3 w-full text-left p-3 rounded-lg font-medium transition duration-150
+//                 ${
+//                   isActive
+//                     ? "bg-indigo-500 text-white "
+//                     : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+//                 }
+//               `}
+//               role="tab"
+//               tabIndex={isActive ? 0 : -1}
+//               id={`tab:«raq»-${index}`}
+//               data-value={tab.value}
+//               aria-selected={isActive}
+//               aria-controls={`panel:«raq»-${index}`}
+//               onClick={() => setActiveTab(tab.value)}
+//             >
+//               <Icon size={18} />
+//               <span className="zmtab__text__gskteg">{tab.label}</span>
+//             </button>
+//           );
+//         })}
+//       </div>
+
+//       {/* 2. Content Area */}
+//       <div className="flex-grow">{renderContent()}</div>
+//     </div>
+//   );
+// };
+
+// export default SettingsPage;
 import React, { useState } from "react";
 import {
   Users,
