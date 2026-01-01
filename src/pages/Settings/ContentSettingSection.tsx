@@ -1,0 +1,85 @@
+import React, { useState } from "react";
+import { Mail, Info } from "lucide-react";
+
+const ContentSettingSection: React.FC = () => {
+  const [saveContent, setSaveContent] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = () => {
+    setIsSaving(true);
+
+    // 🔹 Replace this with API call
+    setTimeout(() => {
+      console.log("Saved setting:", saveContent);
+      setIsSaving(false);
+    }, 1000);
+  };
+
+  return (
+    <div
+      role="tabpanel"
+      id="panel:«raq»-1"
+      aria-labelledby="tab:«raq»-1"
+      className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md space-y-6"
+    >
+      <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+        <Mail size={20} /> Content Setting
+      </h2>
+
+      {/* Info Block */}
+      <div className="p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg text-sm space-y-2">
+        <h3 className="font-semibold text-blue-800 dark:text-blue-300 flex items-center gap-2">
+          <Info size={18} /> Points to be noted:
+        </h3>
+        <ol className="list-decimal list-inside text-gray-700 dark:text-gray-300 space-y-1">
+          <li>
+            Only the content of emails sent after enabling this setting will be
+            saved.
+          </li>
+          <li>
+            You can view the saved content from Processed Emails tab inside each
+            Mail Agent.
+          </li>
+          <li>You can view saved content for up to 60 days.</li>
+        </ol>
+      </div>
+
+      {/* Content Storage Setting */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          Content Storage Setting
+        </h3>
+
+        <div className="flex items-center">
+          <label
+            htmlFor="contentDay"
+            className="flex items-center cursor-pointer text-gray-700 dark:text-gray-300"
+          >
+            <input
+              id="contentDay"
+              type="checkbox"
+              checked={saveContent}
+              onChange={(e) => setSaveContent(e.target.checked)}
+              className="h-5 w-5 mr-3 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            Save the email content
+          </label>
+        </div>
+
+        {/* Save Button */}
+        <div className="pt-4">
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="px-6 py-2 rounded-lg bg-indigo-600 text-white font-medium
+                       hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSaving ? "Saving..." : "Save Settings"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ContentSettingSection;

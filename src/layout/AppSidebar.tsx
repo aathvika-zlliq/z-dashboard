@@ -38,6 +38,11 @@ const navItems: NavItem[] = [
   },
   {
     icon: <Server className="size-5" />,
+    name: "API",
+    path: "/api",
+  },
+  {
+    icon: <Server className="size-5" />,
     name: "Dedicated IP",
     path: "/dedicated-ip",
   },

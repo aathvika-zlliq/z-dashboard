@@ -7,12 +7,21 @@ import TimeRangeDropdown from "../../components/dashboard/TimeRangeDropdown";
 import { useState } from "react";
 import { subWeeks } from "date-fns";
 import VolumeReportChart from "../../layout/VolumeChartReport";
-import { Ban, CalendarClock, Clock } from "lucide-react";
+import { Ban, CalendarClock, Clock, Mail } from "lucide-react";
 import TipBox from "../../components/common/TipBox";
 import DemoSection from "../../components/common/DemoSection";
 import ContactUsSection from "../../components/common/ContactSecton";
+import { TestEmailModal } from "./ModalContent";
 
-// 🧩 Unified reduced spacing (tighter vertical rhythm)
+const getISTGreeting = () => {
+  const now = new Date();
+  const istHour =
+    (now.getUTCHours() + 5 + Math.floor((30 + now.getUTCMinutes()) / 60)) % 24;
+  if (istHour < 12) return "Good Morning Naveen";
+  if (istHour < 18) return "Good Afternoon Naveen";
+  return "Good Evening Naveen";
+};
+
 const sectionSpacing = "my-4 md:my-5 lg:my-6";
 
 export default function Home() {
@@ -21,6 +30,7 @@ export default function Home() {
     endDate: new Date(),
     label: "Last week",
   });
+  const [modalOpen, setModalOpen] = useState(false);
 
   const handleRangeChange = (
     startDate: Date | null,
@@ -41,13 +51,28 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* ================= TOP ROW ================= */}
         <div
-          className={`${sectionSpacing} grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-5`}
+          className={`${sectionSpacing} grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-5 items-center`}
         >
-          <div className="md:col-span-12 flex justify-end">
-            <TimeRangeDropdown
-              align="right"
-              onRangeChange={handleRangeChange}
-            />
+          {/* Greeting + Test Email + Dropdown */}
+          <div className="md:col-span-12 flex flex-col md:flex-row md:items-center justify-between space-y-2 md:space-y-0">
+            <h1 className="text-3xl md:text-5xl font-normal text-gray-900 dark:text-gray-100">
+              {getISTGreeting()}!
+            </h1>
+
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setModalOpen(true)}
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition"
+              >
+                <Mail className="w-5 h-5" />
+                <span>Test Email</span>
+              </button>
+
+              <TimeRangeDropdown
+                align="right"
+                onRangeChange={handleRangeChange}
+              />
+            </div>
           </div>
 
           <div className="md:col-span-12">
@@ -68,7 +93,6 @@ export default function Home() {
               ]}
             />
           </div>
-
           <div className="xl:col-span-3">
             <StatSummaryCard
               title="Email Clicks"
@@ -78,21 +102,18 @@ export default function Home() {
               ]}
             />
           </div>
-
           <div className="xl:col-span-2">
             <StatSummaryCard
               title="Bounces"
               stats={[{ label: "Total", value: 3200, color: "#ef4444" }]}
             />
           </div>
-
           <div className="xl:col-span-2">
             <StatSummaryCard
               title="Unsubscribes"
               stats={[{ label: "Total", value: 560, color: "#f59e0b" }]}
             />
           </div>
-
           <div className="xl:col-span-2">
             <StatSummaryCard
               title="Complaints"
@@ -166,6 +187,9 @@ export default function Home() {
           />
         </div>
       </div>
+
+      {/* ================= Test Email Modal using Theme Popup ================= */}
+      <TestEmailModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </>
   );
 }
