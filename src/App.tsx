@@ -1,4 +1,6 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router";
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
 import AppLayout from "./layout/AppLayout";
 import LiveFeed from "./pages/LiveFeed";
 import Home from "./pages/Dashboard/Home";
@@ -15,40 +17,52 @@ import NotificationsPage from "./pages/OtherPage/Notifications";
 import APISettings from "./pages/API";
 import SettingsPage from "./pages/Settings";
 
-function App() {
+import PrivateRoute from "./utils/Protected";
+import PublicRoute from "./utils/Public";
+
+const App: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Grouped under one base path */}
-        <Route path="/" element={<AppLayout />}>
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<Home />} />
-          <Route path="live-feed" element={<LiveFeed />} />
-          <Route path="statistics" element={<Statistics />} />
-          <Route path="export" element={<Export />} />
-          <Route path="domains" element={<Domains />} />
-          <Route path="dedicated-ip" element={<DedicatedIP />} />
-          <Route path="templates" element={<Templates />} />
-          <Route path="signin" element={<SignIn />} />
-          <Route path="suppressions" element={<Suppressions />} />
-          <Route path="notifications" element={<NotificationsPage />} />
-          <Route path="api" element={<APISettings />} />
-          <Route path="settings" element={<SettingsPage />} />
-          <Route
-            path="suppressions/details"
-            element={
-              <SuppressionDetailsPage
-                onBack={function (): void {
-                  throw new Error("Function not implemented.");
-                }}
-              />
-            }
-          />
-          <Route path="404" element={<NotFound />} />
+        {/* Public route */}
+        <Route element={<PublicRoute />}>
+          <Route path="/signin" element={<SignIn />} />
         </Route>
+
+        {/* Protected routes */}
+        <Route element={<PrivateRoute />}>
+          <Route path="/" element={<AppLayout />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<Home />} />
+            <Route path="live-feed" element={<LiveFeed />} />
+            <Route path="statistics" element={<Statistics />} />
+            <Route path="export" element={<Export />} />
+            <Route path="domains" element={<Domains />} />
+            <Route path="dedicated-ip" element={<DedicatedIP />} />
+            <Route path="templates" element={<Templates />} />
+            <Route path="suppressions" element={<Suppressions />} />
+            <Route
+              path="suppressions/details"
+              element={
+                <SuppressionDetailsPage
+                  onBack={() => {
+                    /* implement back function */
+                  }}
+                />
+              }
+            />
+            <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="api" element={<APISettings />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="404" element={<NotFound />} />
+          </Route>
+        </Route>
+
+        {/* Catch all → redirect to 404 */}
+        <Route path="*" element={<Navigate to="/404" replace />} />
       </Routes>
     </BrowserRouter>
   );
-}
+};
 
 export default App;

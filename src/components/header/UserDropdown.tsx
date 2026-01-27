@@ -9,7 +9,9 @@ import {
   Info,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import { clearLocalStorage } from "../../utils/localstorage.js";
+import toast from "react-hot-toast";
 
 const UserProfileDrawer = () => {
   const [open, setOpen] = useState(false);
@@ -17,9 +19,19 @@ const UserProfileDrawer = () => {
   const email = "randomuser@pimjo.com";
   const userId = "USR-839201";
   const role = "Postmaster";
-
+  const navigate = useNavigate();
   const copyEmail = () => navigator.clipboard.writeText(email);
+  const handleLogout = () => {
+    clearLocalStorage(); // removes api_key / jwtToken
+    toast.success("Logged out successfully");
 
+    setOpen(false);
+
+    // small delay so toast feels natural
+    setTimeout(() => {
+      navigate("/signin");
+    }, 500);
+  };
   return (
     <>
       {/* Trigger */}
@@ -179,6 +191,7 @@ const UserProfileDrawer = () => {
               {/* Footer */}
               <div className="px-5 py-4 border-t border-gray-200 dark:border-gray-800">
                 <button
+                  onClick={handleLogout}
                   className="
                     w-full flex items-center justify-center gap-2
                     p-2 rounded-lg
