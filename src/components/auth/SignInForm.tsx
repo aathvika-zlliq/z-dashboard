@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { connect } from "react-redux";
 import toast from "react-hot-toast";
@@ -8,7 +8,7 @@ import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
 import Button from "../ui/button/Button";
-import { setToken } from "../../utils/localstorage.js";
+import { setToken } from "../../utils/localstorage";
 import { postLoginData } from "../../actions";
 
 /* -------------------------
@@ -21,12 +21,14 @@ type LoginPayload = {
 
 type Props = {
   postLoginData: (payload: LoginPayload) => Promise<any>;
+  user: any;
+  token: string | null;
 };
 
 /* -------------------------
    Component
 -------------------------- */
-function SignInForm({ postLoginData }: Props) {
+function SignInForm({ postLoginData, user, token }: Props) {
   const navigate = useNavigate();
 
   const [showPassword, setShowPassword] = useState(false);
@@ -37,12 +39,15 @@ function SignInForm({ postLoginData }: Props) {
     password: "mKzZNW`Zo7",
   });
 
+  /* 🔥 LOG REDUX DATA */
+  useEffect(() => {
+    console.log("🟢 REDUX USER:", user);
+    console.log("🟢 REDUX TOKEN:", token);
+  }, [user, token]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,21 +55,26 @@ function SignInForm({ postLoginData }: Props) {
 
     try {
       const result = await postLoginData(form);
-      console.log(result);
+
+      console.log("🟡 API RESPONSE:", result);
+
+      // Save token
       setToken(result.api_key);
       localStorage.setItem("jwtToken", result.api_key);
+
+      // Save user
+      if (result.user) {
+        localStorage.setItem("user", JSON.stringify(result.user));
+      }
+
       toast.success("Login successful 🎉");
 
-      // ✅ Reliable redirect AFTER toast
       setTimeout(() => {
         navigate("/dashboard");
-      }, 2000); // match toast duration
+      }, 1500);
     } catch (err: any) {
-      // ✅ REAL API MESSAGE (your response structure)
       const errorMessage =
-        err?.error?.error_message || // "Invalid credentials"
-        err?.message || // fallback
-        "Login failed";
+        err?.error?.error_message || err?.message || "Login failed";
 
       toast.error(errorMessage);
     }
@@ -84,59 +94,44 @@ function SignInForm({ postLoginData }: Props) {
 
         <form onSubmit={handleSubmit}>
           <div className="space-y-6">
-            {/* Email */}
             <div>
-              <Label>
-                Email <span className="text-error-500">*</span>
-              </Label>
+              <Label>Email *</Label>
               <Input
                 name="username"
-                placeholder="info@gmail.com"
                 value={form.username}
                 onChange={handleChange}
               />
             </div>
 
-            {/* Password */}
             <div>
-              <Label>
-                Password <span className="text-error-500">*</span>
-              </Label>
+              <Label>Password *</Label>
               <div className="relative">
                 <Input
                   name="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
                   value={form.password}
                   onChange={handleChange}
                 />
                 <span
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer"
                 >
-                  {showPassword ? (
-                    <EyeIcon className="size-5 fill-gray-500" />
-                  ) : (
-                    <EyeCloseIcon className="size-5 fill-gray-500" />
-                  )}
+                  {showPassword ? <EyeIcon /> : <EyeCloseIcon />}
                 </span>
               </div>
             </div>
 
-            {/* Remember me */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Checkbox checked={isChecked} onChange={setIsChecked} />
-                <span className="text-sm text-gray-700">Keep me logged in</span>
+                <span className="text-sm">Keep me logged in</span>
               </div>
-
               <Link to="#!" className="text-sm text-brand-500">
                 Forgot password?
               </Link>
             </div>
 
-            {/* Submit */}
-            <Button type="submit" className="w-full" size="sm">
+            <Button type="submit" className="w-full">
               Sign in
             </Button>
           </div>
@@ -149,8 +144,13 @@ function SignInForm({ postLoginData }: Props) {
 /* -------------------------
    Redux connect
 -------------------------- */
+const mapStateToProps = (state: any) => ({
+  user: state.settingsReducer.user,
+  token: state.settingsReducer.token,
+});
+
 const mapDispatchToProps = (dispatch: any) => ({
   postLoginData: (payload: LoginPayload) => dispatch(postLoginData(payload)),
 });
 
-export default connect(null, mapDispatchToProps)(SignInForm);
+export default connect(mapStateToProps, mapDispatchToProps)(SignInForm);

@@ -6,8 +6,10 @@ import { useSidebar } from "../context/SidebarContext";
 import { ThemeToggleButton } from "../components/common/ThemeToggleButton";
 import NotificationDropdown from "../components/header/NotificationDropdown";
 import UserDropdown from "../components/header/UserDropdown";
+import { connect } from "react-redux";
+import { getUserProfile } from "../actions";
 
-const AppHeader: React.FC = () => {
+const AppHeader: React.FC = ({ user, token, fetchUserProfile }) => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
   const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
 
@@ -26,6 +28,7 @@ const AppHeader: React.FC = () => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    console.log(user, token);
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key === "k") {
         event.preventDefault();
@@ -35,6 +38,28 @@ const AppHeader: React.FC = () => {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
+  useEffect(() => {
+    if (user?.user_id && user?.account_id) {
+      // Call API and log the result
+      fetchUserProfile()
+        .then((res) => {
+          console.log("User Profile Response:", res);
+        })
+        .catch((err) => {
+          console.error("Failed to fetch user profile:", err);
+        });
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === "k") {
+        event.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [user, fetchUserProfile]);
 
   return (
     <header className="sticky top-0 flex w-full bg-white border-gray-200 z-50 dark:border-gray-800 dark:bg-gray-900 lg:border-b">
@@ -168,5 +193,13 @@ const AppHeader: React.FC = () => {
     </header>
   );
 };
+const mapStateToProps = (state: any) => ({
+  user: state.settingsReducer.user,
+  token: state.settingsReducer.token,
+});
 
-export default AppHeader;
+const mapDispatchToProps = (dispatch) => ({
+  fetchUserProfile: () => dispatch(getUserProfile()), // mapped API call
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(AppHeader);

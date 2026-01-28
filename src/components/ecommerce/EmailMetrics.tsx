@@ -2,29 +2,37 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Mail, MailCheck, CheckCircle } from "lucide-react";
 
-const EmailMetrics: React.FC = () => {
+interface EmailMetricsProps {
+  statistics?: any; // pass dashboardStatistics from Redux
+}
+
+const EmailMetrics: React.FC<EmailMetricsProps> = ({ statistics }) => {
+  // Default to 0 if statistics is undefined
+  const stats = statistics || {};
+
+  // Map API response to displayable metrics
   const metrics = [
     {
       title: "Emails Submitted",
-      value: "8,452",
-      percentage: "+12.3%",
-      trend: "up",
+      value: stats.submitted || 0,
+      percentage: `${stats.submitted ? stats.submitted_percentage || 0 : 0}%`,
+      trend: (stats.submitted_percentage || 0) >= 0 ? "up" : "down",
       color: "#3b82f6",
       icon: Mail,
     },
     {
       title: "Emails Sent",
-      value: "7,980",
-      percentage: "-4.8%",
-      trend: "down",
+      value: stats.sent || 0,
+      percentage: `${stats.sent_percentage || 0}%`,
+      trend: (stats.sent_percentage || 0) >= 0 ? "up" : "down",
       color: "#ef4444",
       icon: MailCheck,
     },
     {
       title: "Emails Delivered",
-      value: "7,720",
-      percentage: "+8.1%",
-      trend: "up",
+      value: stats.delivered || 0,
+      percentage: `${stats.delivered_percentage || 0}%`,
+      trend: (stats.delivered_percentage || 0) >= 0 ? "up" : "down",
       color: "#10b981",
       icon: CheckCircle,
     },
@@ -111,8 +119,8 @@ const EmailMetrics: React.FC = () => {
                   metric.trend === "up"
                     ? "text-green-500"
                     : metric.trend === "down"
-                    ? "text-red-500"
-                    : "text-gray-500"
+                      ? "text-red-500"
+                      : "text-gray-500"
                 }`}
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}

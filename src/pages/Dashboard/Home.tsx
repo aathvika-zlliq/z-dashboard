@@ -1,10 +1,10 @@
-import EcommerceMetrics from "../../components/ecommerce/EcommerceMetrics";
+import EcommerceMetrics from "../../components/ecommerce/EmailMetrics";
 import DemoImage from "../../assets/images/common/cc.png.png";
 import PageMeta from "../../components/common/PageMeta";
 import EmailStatusCard from "../../components/dashboard/EmailStatusCard";
 import StatSummaryCard from "../../components/dashboard/StatusSummaryCard";
 import TimeRangeDropdown from "../../components/dashboard/TimeRangeDropdown";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { subWeeks } from "date-fns";
 import VolumeReportChart from "../../layout/VolumeChartReport";
 import { Ban, CalendarClock, Clock, Mail } from "lucide-react";
@@ -12,6 +12,9 @@ import TipBox from "../../components/common/TipBox";
 import DemoSection from "../../components/common/DemoSection";
 import ContactUsSection from "../../components/common/ContactSecton";
 import { TestEmailModal } from "./ModalContent";
+import { connect } from "react-redux";
+import { getDashboardStatistics } from "../../actions";
+import EmailMetrics from "../../components/ecommerce/EmailMetrics";
 
 const getISTGreeting = () => {
   const now = new Date();
@@ -24,7 +27,7 @@ const getISTGreeting = () => {
 
 const sectionSpacing = "my-4 md:my-5 lg:my-6";
 
-export default function Home() {
+function Home({ dashboardStatistics, loading, getDashboardStatistics }) {
   const [currentRange, setCurrentRange] = useState({
     startDate: subWeeks(new Date(), 1),
     endDate: new Date(),
@@ -35,17 +38,122 @@ export default function Home() {
   const handleRangeChange = (
     startDate: Date | null,
     endDate: Date | null,
-    label: string
+    label: string,
   ) => {
     if (!startDate || !endDate) return;
-    console.log("Selected Range:", startDate, endDate, label);
+    setCurrentRange({ startDate, endDate, label });
+
+    getDashboardStatistics({
+      user_id: "Wu2iLLTOHx",
+      from: startDate.toISOString().split("T")[0],
+      to: endDate.toISOString().split("T")[0],
+      ranges: 1,
+    }).catch(console.error);
   };
+
+  useEffect(() => {
+    // Initial API call
+    getDashboardStatistics({
+      user_id: "Wu2iLLTOHx",
+      from: currentRange.startDate.toISOString().split("T")[0],
+      to: currentRange.endDate.toISOString().split("T")[0],
+      ranges: 1,
+    })
+      .then((res) => console.log(res))
+      .catch(console.error);
+  }, []);
+
+  // Map API response to StatSummaryCard format
+  const summaryCards = [
+    {
+      title: "Email Engagement",
+      stats: [
+        {
+          label: "Opened",
+          value: dashboardStatistics?.opened || 0,
+          color: "#3b82f6",
+        },
+        {
+          label: "AMP",
+          value: dashboardStatistics?.total_amp_open_percentage || 0,
+          color: "#60a5fa",
+        },
+      ],
+    },
+    {
+      title: "Email Clicks",
+      stats: [
+        {
+          label: "Clicked",
+          value: dashboardStatistics?.clicked || 0,
+          color: "#10b981",
+        },
+        {
+          label: "Unique",
+          value: dashboardStatistics?.unique_clicks || 0,
+          color: "#34d399",
+        },
+      ],
+    },
+    {
+      title: "Bounces",
+      stats: [
+        {
+          label: "Total",
+          value: dashboardStatistics?.bounced || 0,
+          color: "#ef4444",
+        },
+      ],
+    },
+    {
+      title: "Unsubscribes",
+      stats: [
+        {
+          label: "Total",
+          value: dashboardStatistics?.unsubscribed || 0,
+          color: "#f59e0b",
+        },
+      ],
+    },
+    {
+      title: "Complaints",
+      stats: [
+        {
+          label: "Reported",
+          value: dashboardStatistics?.complaints || 0,
+          color: "#8b5cf6",
+        },
+      ],
+    },
+  ];
+
+  // Map API response to EmailStatusCard format
+  const emailStatuses = [
+    {
+      label: "In Progress",
+      value: dashboardStatistics?.in_progress || 0,
+      icon: <Clock className="w-12 h-12 text-blue-200" />,
+      color: "#3b82f6",
+    },
+    {
+      label: "Suppressed",
+      value: dashboardStatistics?.suppressed || 0,
+      icon: <Ban className="w-12 h-12 text-red-200" />,
+      color: "#ef4444",
+    },
+    {
+      label: "Scheduled",
+      value: dashboardStatistics?.scheduled || 0,
+      icon: <CalendarClock className="w-12 h-12 text-green-200" />,
+      color: "#10b981",
+    },
+  ];
 
   return (
     <>
       <PageMeta
         title="React.js Ecommerce Dashboard | TailAdmin"
-        description="This is React.js Ecommerce Dashboard page for TailAdmin - React.js Tailwind CSS Admin Dashboard Template"
+        description="React.js Ecommerce Dashboard page"
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -53,7 +161,6 @@ export default function Home() {
         <div
           className={`${sectionSpacing} grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-5 items-center`}
         >
-          {/* Greeting + Test Email + Dropdown */}
           <div className="md:col-span-12 flex flex-col md:flex-row md:items-center justify-between space-y-2 md:space-y-0">
             <h1 className="text-3xl md:text-5xl font-normal text-gray-900 dark:text-gray-100">
               {getISTGreeting()}!
@@ -76,7 +183,7 @@ export default function Home() {
           </div>
 
           <div className="md:col-span-12">
-            <EcommerceMetrics />
+            <EmailMetrics statistics={dashboardStatistics} />
           </div>
         </div>
 
@@ -84,42 +191,14 @@ export default function Home() {
         <div
           className={`${sectionSpacing} grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-12 gap-4 md:gap-5`}
         >
-          <div className="xl:col-span-3">
-            <StatSummaryCard
-              title="Email Engagement"
-              stats={[
-                { label: "Opened", value: 2439387, color: "#3b82f6" },
-                { label: "AMP", value: 0, color: "#60a5fa" },
-              ]}
-            />
-          </div>
-          <div className="xl:col-span-3">
-            <StatSummaryCard
-              title="Email Clicks"
-              stats={[
-                { label: "Clicked", value: 120938, color: "#10b981" },
-                { label: "Unique", value: 87321, color: "#34d399" },
-              ]}
-            />
-          </div>
-          <div className="xl:col-span-2">
-            <StatSummaryCard
-              title="Bounces"
-              stats={[{ label: "Total", value: 3200, color: "#ef4444" }]}
-            />
-          </div>
-          <div className="xl:col-span-2">
-            <StatSummaryCard
-              title="Unsubscribes"
-              stats={[{ label: "Total", value: 560, color: "#f59e0b" }]}
-            />
-          </div>
-          <div className="xl:col-span-2">
-            <StatSummaryCard
-              title="Complaints"
-              stats={[{ label: "Reported", value: 210, color: "#8b5cf6" }]}
-            />
-          </div>
+          {summaryCards.map((card, idx) => (
+            <div
+              key={idx}
+              className={`xl:col-span-${idx === 0 || idx === 1 ? 3 : 2}`}
+            >
+              <StatSummaryCard title={card.title} stats={card.stats} />
+            </div>
+          ))}
         </div>
 
         {/* ================= TIPS ================= */}
@@ -140,26 +219,7 @@ export default function Home() {
         <div className={`${sectionSpacing}`}>
           <EmailStatusCard
             title="Email Performance Overview"
-            statuses={[
-              {
-                label: "In Progress",
-                value: 234,
-                icon: <Clock className="w-12 h-12 text-blue-200" />,
-                color: "#3b82f6",
-              },
-              {
-                label: "Suppressed",
-                value: 89,
-                icon: <Ban className="w-12 h-12 text-red-200" />,
-                color: "#ef4444",
-              },
-              {
-                label: "Scheduled",
-                value: 156,
-                icon: <CalendarClock className="w-12 h-12 text-green-200" />,
-                color: "#10b981",
-              },
-            ]}
+            statuses={emailStatuses}
           />
         </div>
 
@@ -188,8 +248,19 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ================= Test Email Modal using Theme Popup ================= */}
       <TestEmailModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </>
   );
 }
+
+const mapStateToProps = (state: any) => ({
+  dashboardStatistics: state.dashboardReducer.statistics,
+  loading: state.dashboardReducer.loading,
+});
+
+const mapDispatchToProps = (dispatch: any) => ({
+  getDashboardStatistics: (payload: any) =>
+    dispatch(getDashboardStatistics(payload)),
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(Home);

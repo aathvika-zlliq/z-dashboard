@@ -1,21 +1,36 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ThemeToggleButton } from "../common/ThemeToggleButton";
 import NotificationDropdown from "./NotificationDropdown";
 import UserDropdown from "./UserDropdown";
 import { Link } from "react-router";
+import { getUserProfile } from "../../actions";
 
 // Define the interface for the props
 interface HeaderProps {
   onClick?: () => void; // Optional function that takes no arguments and returns void
   onToggle: () => void;
+  user: any;
+  userDetails: any;
+  getUserProfile: () => Promise<any>;
 }
-const Header: React.FC<HeaderProps> = ({ onClick, onToggle }) => {
+const Header: React.FC<HeaderProps> = ({
+  onClick,
+  onToggle,
+  user,
+  userDetails,
+  getUserProfile,
+}) => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
 
   const toggleApplicationMenu = () => {
     setApplicationMenuOpen(!isApplicationMenuOpen);
   };
-
+  useEffect(() => {
+    console.log(user);
+    if (user?.user_id && user?.account_id && !userDetails) {
+      getUserProfile();
+    }
+  }, [user?.user_id, user?.account_id, userDetails, getUserProfile]);
   return (
     <header className="sticky top-0 flex w-full bg-white border-gray-200 z-99999 dark:border-gray-800 dark:bg-gray-900 lg:border-b">
       <div className="flex flex-col items-center justify-between flex-grow lg:flex-row lg:px-6">
@@ -138,7 +153,6 @@ const Header: React.FC<HeaderProps> = ({ onClick, onToggle }) => {
                 />
 
                 <button className="absolute right-2.5 top-1/2 inline-flex -translate-y-1/2 items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-50 px-[7px] py-[4.5px] text-xs -tracking-[0.2px] text-gray-500 dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-400">
-                  <span> ⌘ </span>
                   <span> K </span>
                 </button>
               </div>
@@ -165,4 +179,13 @@ const Header: React.FC<HeaderProps> = ({ onClick, onToggle }) => {
   );
 };
 
-export default Header;
+const mapStateToProps = (state: any) => ({
+  user: state.settingsReducer.user,
+  userDetails: state.userDetailsReducer.details,
+});
+
+const mapDispatchToProps = {
+  getUserProfile,
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(Header);
