@@ -71,11 +71,13 @@ function Home({ dashboardStatistics, loading, getDashboardStatistics }) {
         {
           label: "Opened",
           value: dashboardStatistics?.opened || 0,
+          percentage: dashboardStatistics?.opened_percentage ?? 0,
           color: "#3b82f6",
         },
         {
           label: "AMP",
-          value: dashboardStatistics?.total_amp_open_percentage || 0,
+          value: dashboardStatistics?.total_opens || 0,
+          percentage: dashboardStatistics?.total_amp_open_percentage ?? 0,
           color: "#60a5fa",
         },
       ],
@@ -85,12 +87,14 @@ function Home({ dashboardStatistics, loading, getDashboardStatistics }) {
       stats: [
         {
           label: "Clicked",
-          value: dashboardStatistics?.clicked || 0,
+          value: dashboardStatistics?.total_clicks || 0,
+          percentage: dashboardStatistics?.total_click_percentage ?? 0,
           color: "#10b981",
         },
         {
           label: "Unique",
           value: dashboardStatistics?.unique_clicks || 0,
+          percentage: dashboardStatistics?.unique_click_percentage ?? 0,
           color: "#34d399",
         },
       ],
@@ -101,6 +105,7 @@ function Home({ dashboardStatistics, loading, getDashboardStatistics }) {
         {
           label: "Total",
           value: dashboardStatistics?.bounced || 0,
+          percentage: dashboardStatistics?.total_bounce_percent ?? 0,
           color: "#ef4444",
         },
       ],
@@ -111,6 +116,7 @@ function Home({ dashboardStatistics, loading, getDashboardStatistics }) {
         {
           label: "Total",
           value: dashboardStatistics?.unsubscribed || 0,
+          percentage: dashboardStatistics?.unsubscribed_percent ?? 0,
           color: "#f59e0b",
         },
       ],
@@ -121,6 +127,7 @@ function Home({ dashboardStatistics, loading, getDashboardStatistics }) {
         {
           label: "Reported",
           value: dashboardStatistics?.complaints || 0,
+          percentage: dashboardStatistics?.complaint_percentage ?? 0,
           color: "#8b5cf6",
         },
       ],
@@ -152,7 +159,7 @@ function Home({ dashboardStatistics, loading, getDashboardStatistics }) {
   return (
     <>
       <PageMeta
-        title="React.js Ecommerce Dashboard | TailAdmin"
+        title="Dashboard | Zlliq"
         description="React.js Ecommerce Dashboard page"
       />
 
@@ -189,18 +196,12 @@ function Home({ dashboardStatistics, loading, getDashboardStatistics }) {
 
         {/* ================= STATS SUMMARY ================= */}
         <div
-          className={`${sectionSpacing} grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-12 gap-4 md:gap-5`}
+          className={`${sectionSpacing} grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4`}
         >
-          {summaryCards.map((card, idx) => (
-            <div
-              key={idx}
-              className={`xl:col-span-${idx === 0 || idx === 1 ? 3 : 2}`}
-            >
-              <StatSummaryCard title={card.title} stats={card.stats} />
-            </div>
+          {summaryCards.map((card, i) => (
+            <StatSummaryCard key={i} title={card.title} stats={card.stats} />
           ))}
         </div>
-
         {/* ================= TIPS ================= */}
         <div
           className={`${sectionSpacing} grid grid-cols-1 sm:grid-cols-2 gap-4`}

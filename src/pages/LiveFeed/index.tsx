@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { subWeeks } from "date-fns";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { ChevronRight, Info } from "lucide-react";
+import { connect } from "react-redux";
+
 import PageMeta from "../../components/common/PageMeta";
 import TimeRangeDropdown from "../../components/dashboard/TimeRangeDropdown";
 import MultiSelectDropdown from "../../components/dashboard/forms/MultiSelectDropdown";
@@ -8,110 +10,166 @@ import FloatingTextField from "../../components/dashboard/forms/FloatingTextFiel
 import PrimaryButton from "../../components/common/PrimaryButton";
 import ReusableTable from "../../components/dashboard/ReusableTable";
 import TablePaginationFooter from "../../components/dashboard/TablePaginationFooter";
-import PopupDetails from "./detailsContent";
 import Popup from "../../components/common/Popup";
-import { Info, ChevronRight } from "lucide-react";
+import PopupDetails from "./detailsContent";
 
-/* ================= ANIMATION VARIANTS (UNCHANGED) ================= */
+import {
+  getSendingDomainList,
+  searchBySends,
+  getSendProfileDetails,
+} from "../../actions";
 
-const pageVariants = {
-  hidden: { opacity: 0, y: 16, scale: 0.98 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { duration: 0.45, ease: "easeOut" },
-  },
-  exit: {
-    opacity: 0,
-    y: -12,
-    scale: 0.98,
-    transition: { duration: 0.3, ease: "easeIn" },
-  },
-};
+import {
+  pageVariants,
+  sectionVariants,
+  tableContainerVariants,
+  tableRowVariants,
+  popupContentVariants,
+  EVENT_OPTIONS,
+  EVENT_DEPENDENT_OPTIONS,
+  DEFAULT_TIME_RANGE,
+  LIVE_FEED_DUMMY_DATA,
+} from "./data";
 
-const sectionVariants = {
-  hidden: { opacity: 0, y: 14 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4, ease: "easeOut" },
-  },
-};
-
-const tableContainerVariants = {
-  hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.08,
-      delayChildren: 0.1,
-    },
-  },
-};
-
-const tableRowVariants = {
-  hidden: { opacity: 0, y: 10, scale: 0.98 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { duration: 0.35, ease: "easeOut" },
-  },
-};
-
-const popupContentVariants = {
-  hidden: { opacity: 0, y: 20, scale: 0.96 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { duration: 0.4, ease: "easeOut" },
-  },
-};
-
-/* ================= DATA & COMPONENT ================= */
-
-const options = [
-  { label: "Marketing dfgh ghjkjhgf g", value: "marketing" },
-  { label: "Sales", value: "sales" },
-  { label: "Finance", value: "finance" },
-  { label: "IT Support", value: "it" },
-];
-
-const LiveFeed = () => {
-  const [currentRange, setCurrentRange] = useState({
-    startDate: subWeeks(new Date(), 1),
-    endDate: new Date(),
-    label: "Last week",
-  });
+const LiveFeed = ({
+  getSendingDomainList,
+  getSendProfileDetails,
+  searchBySends,
+  data,
+}: any) => {
+  /* ================= STATE ================= */
+  console.log(data);
+  const [currentRange, setCurrentRange] = useState(DEFAULT_TIME_RANGE);
 
   const [recipientDomain, setRecipientDomain] = useState("");
   const [clickTrackingId, setClickTrackingId] = useState("");
   const [email, setEmail] = useState("");
+  const [tableData, setTableData] = useState<any[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
+  const [fromAddressOptions, setFromAddressOptions] = useState<any[]>([]);
+  const [selectedFromAddress, setSelectedFromAddress] = useState<any[]>([]);
+  const [selectedEvents, setSelectedEvents] = useState<any[]>([]);
+  const [statusTypeOptions, setStatusTypeOptions] = useState<any[]>([]);
+  const [selectedStatusTypes, setSelectedStatusTypes] = useState<any[]>([]);
 
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
-  const totalItems = 648758;
+  // const totalItems = 648758;
   const totalPages = Math.ceil(totalItems / pageSize);
+
+  const [resetKey, setResetKey] = useState(0);
+  const hasData = tableData.length > 0;
 
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState<any>(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [detailsData, setDetailsData] = useState<any>(null);
+
+  /* ================= HANDLERS ================= */
 
   const handleRangeChange = (
     startDate: Date | null,
     endDate: Date | null,
-    label: string
+    label: string,
   ) => {
     if (!startDate || !endDate) return;
     setCurrentRange({ startDate, endDate, label });
   };
 
-  const handleViewDetails = (row: any) => {
-    setSelectedRow(row);
+  const handleViewDetails = async (row: any) => {
     setIsPopupOpen(true);
+    setSelectedRow(row);
+    setDetailsLoading(true);
+    setDetailsData(null);
+
+    try {
+      const res = await getSendProfileDetails({
+        user_id: 1001,
+        mail_class: "testdev",
+        send_id: row.raw.send_id,
+        click_tracking_id: row.raw.click_tracking_id,
+      });
+
+      const api = res;
+      console.log("api", api);
+      if (!api) {
+        setDetailsData(null);
+        return;
+      }
+
+      // ✅ NORMALIZE DATA FOR UI
+      const mappedDetails = {
+        request_id: api.click_tracking_id, // fallback id
+        message_id: api.message_id,
+        date: new Date(api.sent_on).toLocaleString(),
+        subject: api.subject,
+        sender: api.sender_address,
+        recipients: api.results || [],
+      };
+
+      setDetailsData(mappedDetails);
+    } catch (err) {
+      console.error("Profile details fetch failed", err);
+      setDetailsData(null);
+    } finally {
+      setDetailsLoading(false);
+    }
   };
 
-  /* ================= TABLE COLUMNS (FIX APPLIED HERE) ================= */
+  const handleResetFilters = () => {
+    setRecipientDomain("");
+    setClickTrackingId("");
+    setEmail("");
+
+    setSelectedFromAddress([]);
+    setSelectedEvents([]);
+    setSelectedStatusTypes([]);
+    setStatusTypeOptions([]);
+
+    setCurrentRange(DEFAULT_TIME_RANGE);
+    setResetKey((k) => k + 1);
+    setPage(1);
+  };
+
+  /* ================= EFFECTS ================= */
+
+  useEffect(() => {
+    getSendingDomainList()
+      .then((res: any) => {
+        const domains = res?.sending_domains || [];
+        setFromAddressOptions(
+          domains.map((d: string) => ({
+            label: d,
+            value: d,
+          })),
+        );
+      })
+      .catch(console.log);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedEvents.length) {
+      setStatusTypeOptions([]);
+      setSelectedStatusTypes([]);
+      return;
+    }
+
+    const eventValues = selectedEvents.map((e) =>
+      typeof e === "string" ? e : e.value,
+    );
+
+    const mergedOptions = eventValues.flatMap(
+      (event) => EVENT_DEPENDENT_OPTIONS[event] || [],
+    );
+
+    const uniqueOptions = Array.from(
+      new Map(mergedOptions.map((o) => [o.value, o])).values(),
+    );
+
+    setStatusTypeOptions(uniqueOptions);
+  }, [selectedEvents]);
+
+  /* ================= TABLE COLUMNS ================= */
 
   const columns = [
     {
@@ -127,7 +185,7 @@ const LiveFeed = () => {
               <span className="w-4 border-t-2 border-dotted border-gray-300 dark:border-gray-600" />
               <ChevronRight
                 size={14}
-                className="text-gray-400 dark:text-gray-500 relative -left-[2px]"
+                className="text-gray-400 dark:text-gray-500"
               />
             </div>
           </div>
@@ -146,11 +204,9 @@ const LiveFeed = () => {
     {
       key: "date",
       label: "Requested Date / Time",
-      // --- FIX: Use render to explicitly apply color to the text ---
       render: (row: any) => (
         <span className="text-gray-800 dark:text-gray-200">{row.date}</span>
       ),
-      // -----------------------------------------------------------
     },
     {
       key: "opens",
@@ -195,19 +251,72 @@ const LiveFeed = () => {
       ),
     },
   ];
+  const buildSearchPayload = () => {
+    const formatDate = (date: Date) => date.toISOString().split("T")[0]; // YYYY-MM-DD
 
-  const data = Array.from({ length: 10 }).map(() => ({
-    from: "alerts@k7computing.com",
-    to: "abharayregroup9@gmail.com",
-    date: "10/29/2025, 9:08:24 PM",
-    status: "Success",
-    requestId: "REQ-123456",
-    messageId: "MSG-654321",
-    subject: "Test Email",
-    ip: "192.168.0.1",
-    via: "SMTP",
-    agent: "NodeMailer",
-  }));
+    return {
+      page_size: pageSize,
+      page_no: page,
+
+      search_email: email || "",
+
+      events: selectedEvents.map((e) => (typeof e === "string" ? e : e.value)),
+
+      from_date: formatDate(currentRange.startDate),
+      to_date: formatDate(currentRange.endDate),
+
+      is_amp: 0,
+
+      tracking_id: clickTrackingId || "",
+      recipient_domain: recipientDomain || "",
+
+      sending_domain: selectedFromAddress
+        .map((d) => (typeof d === "string" ? d : d.value))
+        .join(","),
+
+      status: selectedStatusTypes.map((s) =>
+        typeof s === "string" ? s : s.value,
+      ),
+
+      bounce_type: selectedStatusTypes
+        .filter((s) => ["h", "s", "o"].includes(s.value))
+        .map((s) => s.value),
+    };
+  };
+  const handleSearch = () => {
+    searchBySends(buildSearchPayload());
+  };
+
+  const mapApiToTable = (results: any[]) => {
+    console.log(results);
+    return results.map((item, index) => ({
+      id: `${item.click_tracking_id}-${item.event_type}-${index}`,
+
+      // 🔑 REQUIRED for ReusableTable
+      fromTo: `${item.last_from_address} → ${item.email}`,
+
+      from: item.last_from_address,
+      to: item.email,
+      date: new Date(item.latest_created_at).toLocaleString(),
+      status: item.last_status,
+      raw: item,
+    }));
+  };
+  useEffect(() => {
+    handleSearch();
+  }, [page, pageSize]);
+  useEffect(() => {
+    if (!data || !Array.isArray(data.Results)) {
+      setTableData([]);
+      setTotalItems(0);
+      return;
+    }
+
+    setTableData(mapApiToTable(data.Results));
+    setTotalItems(data.table_count || 0);
+  }, [data]);
+
+  /* ================= RENDER ================= */
 
   return (
     <>
@@ -227,41 +336,45 @@ const LiveFeed = () => {
             variants={sectionVariants}
             className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm p-6"
           >
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Filters
-            </h2>
+            <h2 className="text-lg font-semibold mb-4">Filters</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              <TimeRangeDropdown onRangeChange={handleRangeChange} />
-              <MultiSelectDropdown
-                placeholder="Select Departments"
-                options={options}
+              <TimeRangeDropdown
+                key={`timerange-${resetKey}`}
+                onRangeChange={handleRangeChange}
               />
+
+              <MultiSelectDropdown
+                key={`from-${resetKey}`}
+                placeholder="From Address"
+                options={fromAddressOptions}
+                value={selectedFromAddress}
+                onChange={setSelectedFromAddress}
+              />
+
               <FloatingTextField
                 label="Recipient Domain"
                 value={recipientDomain}
                 onChange={setRecipientDomain}
               />
+
               <MultiSelectDropdown
+                key={`events-${resetKey}`}
                 placeholder="Select Events"
-                options={options}
+                options={EVENT_OPTIONS}
+                value={selectedEvents}
+                onChange={setSelectedEvents}
               />
-              <MultiSelectDropdown placeholder="Status" options={options} />
-              <MultiSelectDropdown
-                placeholder="Bounce Type"
-                options={options}
-              />
-              <MultiSelectDropdown placeholder="Type" options={options} />
-              <FloatingTextField
-                label="Search by Click Tracking Id"
-                value={clickTrackingId}
-                onChange={setClickTrackingId}
-              />
-              <FloatingTextField
-                label="Enter Email"
-                value={email}
-                onChange={setEmail}
-              />
+
+              {statusTypeOptions.length > 0 && (
+                <MultiSelectDropdown
+                  key={`status-${resetKey}`}
+                  placeholder="Status / Type"
+                  options={statusTypeOptions}
+                  value={selectedStatusTypes}
+                  onChange={setSelectedStatusTypes}
+                />
+              )}
             </div>
 
             <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mt-4 px-2">
@@ -272,63 +385,94 @@ const LiveFeed = () => {
 
               <div className="flex gap-2">
                 <button
-                  className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 px-4 py-2 rounded-md transition"
-                  onClick={() => {
-                    setRecipientDomain("");
-                    setClickTrackingId("");
-                    setEmail("");
-                  }}
+                  onClick={handleResetFilters}
+                  className="border px-4 py-2 rounded-md"
                 >
                   Reset
                 </button>
-                <PrimaryButton label="Search" />
+                <PrimaryButton
+                  label="Search"
+                  onClick={() => {
+                    setPage(1); // 🔑 reset page
+                    handleSearch();
+                  }}
+                />
               </div>
             </div>
           </motion.div>
-
-          {/* ================= TABLE WITH STAGGER ================= */}
-          <motion.div
-            variants={tableContainerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            <ReusableTable
-              columns={columns}
-              data={data}
-              // Row class still handles background and general row color
-              rowClassName="group bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-800 dark:text-gray-200"
-              rowWrapper={(row, children) => (
-                <motion.tr
-                  variants={tableRowVariants}
-                  whileHover={{
-                    y: -2,
-                    boxShadow: "0 10px 28px rgba(0,0,0,0.15)",
-                  }}
-                  className="transition-shadow"
+          <AnimatePresence>
+            {!hasData && (
+              <motion.div
+                key="no-data"
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={{ duration: 0.35, ease: "easeOut" }}
+                className="flex flex-col items-center justify-center py-20 bg-white dark:bg-gray-800 border border-dashed border-gray-300 dark:border-gray-600 rounded-2xl"
+              >
+                <motion.div
+                  initial={{ y: 10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.1 }}
+                  className="text-center"
                 >
-                  {children}
-                </motion.tr>
-              )}
-            />
-          </motion.div>
+                  <div className="text-5xl mb-4">📭</div>
 
-          {/* ================= PAGINATION ================= */}
-          <motion.div
-            variants={sectionVariants}
-            className="rounded-xl bg-gray-50 dark:bg-gray-800/60 p-3 border border-gray-200 dark:border-gray-700"
-          >
-            <TablePaginationFooter
-              currentPage={page}
-              totalPages={totalPages}
-              totalItems={totalItems}
-              pageSize={pageSize}
-              onPageChange={setPage}
-              onPageSizeChange={(size) => {
-                setPageSize(size);
-                setPage(1);
-              }}
-            />
-          </motion.div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    No data found
+                  </h3>
+
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-sm">
+                    Try adjusting your filters or selecting a different date
+                    range to see email activity.
+                  </p>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          {hasData && (
+            <motion.div
+              variants={tableContainerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              <ReusableTable
+                columns={columns}
+                data={tableData}
+                rowClassName="group bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                rowWrapper={(row, children) => (
+                  <motion.tr
+                    variants={tableRowVariants}
+                    whileHover={{
+                      y: -2,
+                      boxShadow: "0 10px 28px rgba(0,0,0,0.15)",
+                    }}
+                  >
+                    {children}
+                  </motion.tr>
+                )}
+              />
+            </motion.div>
+          )}
+
+          {hasData && (
+            <motion.div
+              variants={sectionVariants}
+              className="rounded-xl bg-gray-50 dark:bg-gray-800/60 p-3 border"
+            >
+              <TablePaginationFooter
+                currentPage={page}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                pageSize={pageSize}
+                onPageChange={setPage}
+                onPageSizeChange={(size) => {
+                  setPageSize(size);
+                  setPage(1);
+                }}
+              />
+            </motion.div>
+          )}
         </motion.div>
       </AnimatePresence>
 
@@ -347,8 +491,9 @@ const LiveFeed = () => {
               animate="visible"
             >
               <PopupDetails
+                rowData={detailsData}
+                loading={detailsLoading}
                 onClose={() => setIsPopupOpen(false)}
-                rowData={selectedRow}
               />
             </motion.div>
           </Popup>
@@ -358,4 +503,17 @@ const LiveFeed = () => {
   );
 };
 
-export default LiveFeed;
+/* ================= REDUX ================= */
+const mapStateToProps = (state: any) => ({
+  data: state.smtpReducer.data,
+});
+
+const mapDispatchToProps = (dispatch: any) => ({
+  getSendingDomainList: (payload: any) =>
+    dispatch(getSendingDomainList(payload)),
+  searchBySends: (payload: any) => dispatch(searchBySends(payload)),
+  getSendProfileDetails: (payload: any) =>
+    dispatch(getSendProfileDetails(payload)),
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(LiveFeed);

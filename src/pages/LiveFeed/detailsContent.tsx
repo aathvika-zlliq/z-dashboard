@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ClipboardCopy, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -21,16 +21,22 @@ interface RecipientRow {
 
 interface PopupDetailsProps {
   rowData?: any;
+  loading?: boolean;
 }
 
-const PopupDetails: React.FC<PopupDetailsProps> = ({ rowData }) => {
+const PopupDetails: React.FC<PopupDetailsProps> = ({ rowData, loading }) => {
   const [openDropdown, setOpenDropdown] = useState<{
     type: "delivery" | "timeline";
     index: number;
   } | null>(null);
 
   const [copiedField, setCopiedField] = useState<string | null>(null);
-
+  useEffect(() => {
+    if (!loading && rowData) {
+      console.log("📦 Details API data received in Popup:", rowData);
+    }
+  }, [rowData, loading]);
+  console.log(rowData);
   const recipients: RecipientRow[] = [
     {
       recipient: "info@zlliq.com",
@@ -79,87 +85,77 @@ const PopupDetails: React.FC<PopupDetailsProps> = ({ rowData }) => {
       return <span className="text-red-500 font-semibold">✖ Bounced</span>;
     return <span>{status}</span>;
   };
-
-  if (!rowData) {
-    rowData = {
-      requestId:
-        "2518b.596d98603c8d4657.m1.14500f30-d797-11f0-bfd5-525400c92439.19b1432cfa3",
-      messageId:
-        "<2518b.596d98603c8d4657.m1.14500f30-d797-11f0-bfd5-525400c92439.19b1432cfa3@bounce-zem.zlliq.com>",
-      date: "13 Dec 2025, 1.43.52 AM",
-      subject: "Hi Naveen, Welcome to ZlliQ Technologies",
-      from: "ZlliQ Technologies Pvt Ltd <newsletters@zlliq.com>",
-      ip: "152.57.83.215",
-      via: "API",
-      agent: "Bounce address\nnewsletters@bounce-zem.zlliq.com",
-    };
+  const safeValue = (val?: any) =>
+    val !== undefined && val !== null && val !== "" ? val : "--";
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-sm text-gray-500"
+        >
+          Loading profile details…
+        </motion.div>
+      </div>
+    );
   }
-
   return (
     <div className="flex flex-col md:flex-row gap-4">
       {/* Left Section */}
       <div className="w-full md:w-[30%] bg-gray-50 dark:bg-gray-800 p-4 rounded-lg space-y-3">
         {/* Request ID */}
         <div>
-          <div className="flex justify-between items-center">
-            <span className="font-semibold">Request ID:</span>
-            <button
-              onClick={() => copyToClipboard(rowData.requestId, "requestId")}
-              className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center gap-1"
-              title="Copy"
-            >
-              {copiedField === "requestId" ? "✔" : <ClipboardCopy size={16} />}
-            </button>
-          </div>
-          <div className="text-sm break-all truncate" title={rowData.requestId}>
-            {rowData.requestId}
+          <span className="font-semibold">Request ID:</span>
+          <div className="text-sm break-all">
+            {safeValue(rowData?.request_id)}
           </div>
         </div>
 
         {/* Message ID */}
         <div>
-          <div className="flex justify-between items-center">
-            <span className="font-semibold">Message ID:</span>
-            <button
-              onClick={() => copyToClipboard(rowData.messageId, "messageId")}
-              className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center gap-1"
-              title="Copy"
-            >
-              {copiedField === "messageId" ? "✔" : <ClipboardCopy size={16} />}
-            </button>
-          </div>
-          <div className="text-sm break-all truncate" title={rowData.messageId}>
-            {rowData.messageId}
+          <span className="font-semibold">Message ID:</span>
+          <div className="text-sm break-all">
+            {safeValue(rowData?.message_id)}
           </div>
         </div>
 
-        {/* Other fields */}
+        {/* Date */}
         <div>
           <span className="font-semibold">Date:</span>
-          <div className="text-sm">{rowData.date}</div>
+          <div className="text-sm">{safeValue(rowData?.date)}</div>
         </div>
+
+        {/* Subject */}
         <div>
           <span className="font-semibold">Subject:</span>
-          <div className="text-sm break-all">{rowData.subject}</div>
+          <div className="text-sm break-all">{safeValue(rowData?.subject)}</div>
         </div>
+
+        {/* From */}
         <div>
           <span className="font-semibold">From:</span>
           <div className="text-sm break-all whitespace-pre-wrap">
-            {rowData.from}
+            {safeValue(rowData?.sender)}
           </div>
         </div>
+
+        {/* ✅ HARDCODED LAST 3 FIELDS */}
+
         <div>
           <span className="font-semibold">Request triggered IP:</span>
-          <div className="text-sm">{rowData.ip}</div>
+          <div className="text-sm">192.168.0.1</div>
         </div>
+
         <div>
           <span className="font-semibold">Mail sent via:</span>
-          <div className="text-sm">{rowData.via}</div>
+          <div className="text-sm">SMTP</div>
         </div>
+
         <div>
           <span className="font-semibold">Mail Agent name:</span>
           <div className="text-sm break-all whitespace-pre-wrap">
-            {rowData.agent}
+            NodeMailer
           </div>
         </div>
       </div>
@@ -209,7 +205,7 @@ const PopupDetails: React.FC<PopupDetailsProps> = ({ rowData }) => {
                         openDropdown?.index === idx &&
                           openDropdown.type === "delivery"
                           ? null
-                          : { type: "delivery", index: idx }
+                          : { type: "delivery", index: idx },
                       )
                     }
                   >
@@ -263,7 +259,7 @@ const PopupDetails: React.FC<PopupDetailsProps> = ({ rowData }) => {
                             </div>
                             <div>
                               {new Date(
-                                r.deliveryInfo.deliveryTime
+                                r.deliveryInfo.deliveryTime,
                               ).toLocaleString()}
                             </div>
                           </div>
@@ -281,7 +277,7 @@ const PopupDetails: React.FC<PopupDetailsProps> = ({ rowData }) => {
                         openDropdown?.index === idx &&
                           openDropdown.type === "timeline"
                           ? null
-                          : { type: "timeline", index: idx }
+                          : { type: "timeline", index: idx },
                       )
                     }
                   >
