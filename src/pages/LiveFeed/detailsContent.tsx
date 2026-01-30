@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ClipboardCopy, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import HardBounceTimeline from "./HardBounceTimeline";
 
 interface RecipientRow {
   recipient: string;
@@ -36,41 +37,26 @@ const PopupDetails: React.FC<PopupDetailsProps> = ({ rowData, loading }) => {
       console.log("📦 Details API data received in Popup:", rowData);
     }
   }, [rowData, loading]);
-  console.log(rowData);
-  const recipients: RecipientRow[] = [
-    {
-      recipient: "info@zlliq.com",
-      status: "Delivered",
-      deliveryInfo: {
-        encryption: "TLS",
-        relay: "aspmx.l.google.com/142.250.4.27",
-        duration: 3605,
-        recipient: "info@zlliq.com",
-        status: "SUCCESS",
-        deliveryTime: "2025-12-13T01:43:56+05:30",
-      },
-      timeline: [
-        { time: "13 Dec 2025, 1.43.52 AM", event: "Queued" },
-        { time: "13 Dec 2025, 1.43.56 AM", event: "Delivered" },
-      ],
+  const recipients = (rowData?.data?.results || []).map((item: any) => ({
+    recipient: item.email,
+    status: item.event_type || item.status,
+
+    deliveryInfo: {
+      encryption: "--",
+      relay: "--",
+      duration: 0,
+      recipient: item.email,
+      status: item.status,
+      deliveryTime: item.created_at,
     },
-    {
-      recipient: "someoneelse@gmail.com",
-      status: "Bounced",
-      deliveryInfo: {
-        encryption: "TLS",
-        relay: "mx.example.com/192.168.0.1",
-        duration: 0,
-        recipient: "someoneelse@gmail.com",
-        status: "FAILED",
-        deliveryTime: "2025-12-13T02:05:00+05:30",
+
+    timeline: [
+      {
+        event: item.event_type,
+        time: new Date(item.created_at).toLocaleString(),
       },
-      timeline: [
-        { time: "13 Dec 2025, 2.00.00 AM", event: "Queued" },
-        { time: "13 Dec 2025, 2.05.00 AM", event: "Bounced" },
-      ],
-    },
-  ];
+    ],
+  }));
 
   const copyToClipboard = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
@@ -79,12 +65,21 @@ const PopupDetails: React.FC<PopupDetailsProps> = ({ rowData, loading }) => {
   };
 
   const getStatusIcon = (status: string) => {
-    if (status === "Delivered")
-      return <span className="text-green-500 font-semibold">✔ Delivered</span>;
-    if (status === "Bounced")
-      return <span className="text-red-500 font-semibold">✖ Bounced</span>;
-    return <span>{status}</span>;
+    const s = status?.toLowerCase();
+
+    if (s === "delivered" || s === "sent")
+      return <span className="text-green-500 font-semibold">✔ {status}</span>;
+
+    if (s === "bounced" || s === "failed")
+      return <span className="text-red-500 font-semibold">✖ {status}</span>;
+
+    return <span className="text-yellow-500 font-semibold">{status}</span>;
   };
+  useEffect(() => {
+    console.log("RAW rowData:", rowData);
+    console.log("RESULTS:", rowData?.data?.results);
+  }, [rowData]);
+
   const safeValue = (val?: any) =>
     val !== undefined && val !== null && val !== "" ? val : "--";
   if (loading) {
@@ -298,6 +293,7 @@ const PopupDetails: React.FC<PopupDetailsProps> = ({ rowData, loading }) => {
                             <span className="font-semibold text-gray-700 dark:text-gray-300">
                               Timeline
                             </span>
+
                             <button
                               onClick={() => setOpenDropdown(null)}
                               className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-200"
@@ -305,8 +301,8 @@ const PopupDetails: React.FC<PopupDetailsProps> = ({ rowData, loading }) => {
                               <X size={16} />
                             </button>
                           </div>
-
-                          <div className="flex flex-col relative ml-4">
+                          <HardBounceTimeline />
+                          {/* <div className="flex flex-col relative ml-4">
                             {r.timeline.map((t, i) => {
                               const isLast = i === r.timeline.length - 1;
                               return (
@@ -315,20 +311,20 @@ const PopupDetails: React.FC<PopupDetailsProps> = ({ rowData, loading }) => {
                                   className="flex items-start relative"
                                 >
                                   <div className="relative flex flex-col items-center">
-                                    {/* Dot */}
+                                   
                                     <div
                                       className={`w-3 h-3 rounded-full mt-1 z-10 ${
                                         isLast ? "bg-green-500" : "bg-gray-400"
                                       }`}
                                     ></div>
 
-                                    {/* Line */}
+                                 
                                     {!isLast && (
                                       <div className="absolute top-2 left-1/2 -translate-x-1/2 w-0.5 h-[45px] bg-gray-300"></div>
                                     )}
                                   </div>
 
-                                  {/* Text */}
+                               
                                   <div className="ml-4 text-sm">
                                     <div className="font-semibold">
                                       {t.event}
@@ -340,7 +336,7 @@ const PopupDetails: React.FC<PopupDetailsProps> = ({ rowData, loading }) => {
                                 </div>
                               );
                             })}
-                          </div>
+                          </div> */}
                         </motion.div>
                       )}
                   </AnimatePresence>

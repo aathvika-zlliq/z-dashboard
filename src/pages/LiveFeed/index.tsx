@@ -107,7 +107,18 @@ const LiveFeed = ({
         recipients: api.results || [],
       };
 
-      setDetailsData(mappedDetails);
+      setDetailsData({
+        request_id: api.click_tracking_id,
+        message_id: api.message_id,
+        date: new Date(api.sent_on).toLocaleString(),
+        subject: api.subject,
+        sender: api.sender_address,
+
+        // 🔑 THIS IS THE KEY FIX
+        data: {
+          results: api.results || [],
+        },
+      });
     } catch (err) {
       console.error("Profile details fetch failed", err);
       setDetailsData(null);

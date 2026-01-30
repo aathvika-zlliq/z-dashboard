@@ -5,6 +5,7 @@ import settingsReducer from "./settingsReducer";
 import userDetailsReducer from "./userDetailsReducer";
 import dashboardReducer from "./dashboardReducer";
 import smtpReducer from "./smtpReducer";
+import campaignReducer from "./campaignReducer";
 
 // ===========================|| COMBINE REDUCER ||=========================== //
 
@@ -13,6 +14,7 @@ const reducers = combineReducers({
   dashboardReducer,
   userDetailsReducer,
   smtpReducer,
+  campaignReducer,
 });
 
 export default reducers;

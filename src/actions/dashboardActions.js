@@ -3,6 +3,7 @@ import {
   LOADING_STOP,
   SET_DASHBOARD_STATISTICS,
   SET_SEARCH_BY_SENDS,
+  SET_LIST_OF_CAMPAIGNS,
 } from "../store/actions";
 
 import Api1 from "../utils/api1";
@@ -77,6 +78,25 @@ export const getSendProfileDetails =
       .get(`/smtp/sends/profile_details?${query}`)
       .then((result) => {
         return result; // 👈 important: return API response
+      })
+      .catch((err) => Promise.reject(err))
+      .finally(() => {
+        dispatch({ type: LOADING_STOP });
+      });
+  };
+export const getListOfCampaigns =
+  ({ mail_class = "testdev", payload }) =>
+  (dispatch) => {
+    dispatch({ type: LOADING_START });
+
+    return Api1(BASE_URL)
+      .post(`/smtp/list_of_campaigns?mail_class=${mail_class}`, payload)
+      .then((result) => {
+        dispatch({
+          type: SET_LIST_OF_CAMPAIGNS,
+          payload: result,
+        });
+        return result;
       })
       .catch((err) => Promise.reject(err))
       .finally(() => {

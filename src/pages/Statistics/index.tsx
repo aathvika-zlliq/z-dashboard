@@ -6,6 +6,20 @@ import TimeRangeDropdown from "../../components/dashboard/TimeRangeDropdown";
 import PageMeta from "../../components/common/PageMeta";
 import PrimaryButton from "../../components/common/PrimaryButton";
 import TablePaginationFooter from "../../components/dashboard/TablePaginationFooter";
+import { connect } from "react-redux";
+import { getListOfCampaigns } from "../../actions/dashboardActions.js";
+import { motion, AnimatePresence } from "framer-motion";
+
+const tableBodyVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.04 } },
+};
+
+const dropdownVariants = {
+  hidden: { opacity: 0, scale: 0.95, y: -8 },
+  visible: { opacity: 1, scale: 1, y: 0 },
+  exit: { opacity: 0, scale: 0.95, y: -8 },
+};
 
 /* ==========================================================
    ✅ TooltipCell (Persistent + Top Center)
@@ -86,7 +100,7 @@ const TooltipCell = ({ label, value, tooltipData }: any) => {
               ))}
             </ul>
           </div>,
-          document.body
+          document.body,
         )}
     </>
   );
@@ -123,7 +137,7 @@ const ColumnFilterMenu = ({
 
   const handleToggle = (key: string) => {
     setSelected((prev) =>
-      prev.includes(key) ? prev.filter((c) => c !== key) : [...prev, key]
+      prev.includes(key) ? prev.filter((c) => c !== key) : [...prev, key],
     );
   };
 
@@ -133,9 +147,14 @@ const ColumnFilterMenu = ({
   };
 
   const handleReset = () => {
+    setSelected(columns.map((c: any) => c.key)); // 🔑 reset local state
     onReset();
     setOpen(false);
   };
+
+  useEffect(() => {
+    setSelected(visibleColumns);
+  }, [visibleColumns]);
 
   /* 🧠 Smooth Scroll Disable (Keep Scrollbar Visible) */
   useEffect(() => {
@@ -145,7 +164,6 @@ const ColumnFilterMenu = ({
       document.body.style.top = `-${scrollY}px`;
       document.body.style.width = "100%";
       document.body.style.overflowY = "scroll"; // scrollbar stays visible
-      document.body.style.pointerEvents = "none"; // background non-clickable
     } else {
       const scrollY = document.body.style.top;
       document.body.style.position = "";
@@ -170,8 +188,8 @@ const ColumnFilterMenu = ({
         setOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
   }, [open]);
 
   return (
@@ -183,22 +201,22 @@ const ColumnFilterMenu = ({
       >
         <MoreHorizontal className="w-5 h-5 text-gray-700 dark:text-gray-300" />
       </button>
-
-      {open &&
-        createPortal(
-          <>
-            {/* Overlay */}
-
-            {/* Filter Dropdown */}
-            <div
-              className="global-filter-menu fixed z-[999999] bg-white dark:bg-gray-900 
-              border border-gray-200 dark:border-gray-700 shadow-2xl rounded-xl w-64 p-4 
-              text-sm transition-all duration-300 ease-in-out"
+      <AnimatePresence>
+        {open &&
+          createPortal(
+            <motion.div
+              className="global-filter-menu fixed z-[999999] bg-white dark:bg-gray-900
+        border border-gray-200 dark:border-gray-700 shadow-2xl rounded-xl w-64 p-4 text-sm"
               style={{
                 left: `${coords.x}px`,
                 top: `${coords.y}px`,
-                transform: "translateX(0)",
               }}
+              variants={dropdownVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              onClick={(e) => e.stopPropagation()} // 🔑 VERY IMPORTANT
             >
               <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-base mb-2 text-center">
                 Column Filter
@@ -224,23 +242,22 @@ const ColumnFilterMenu = ({
               <div className="flex justify-between mt-4">
                 <button
                   onClick={handleReset}
-                  className="px-4 py-1.5 text-[14px] rounded-md border border-[#0042E4] 
-                  text-[#0042E4] hover:bg-[#0042E4] hover:text-white 
-                  dark:border-[#3B82F6] dark:text-[#3B82F6] dark:hover:bg-[#3B82F6] dark:hover:text-white transition"
+                  className="px-4 py-1.5 text-[14px] rounded-md border border-[#0042E4]
+            text-[#0042E4] hover:bg-[#0042E4] hover:text-white transition"
                 >
                   Reset
                 </button>
                 <button
                   onClick={handleApply}
-                  className="px-4 py-1.5 text-[14px] rounded-md bg-[#0042E4] text-white hover:bg-[#0032b0] transition"
+                  className="px-4 py-1.5 text-[14px] rounded-md bg-[#0042E4] text-white"
                 >
                   Apply
                 </button>
               </div>
-            </div>
-          </>,
-          document.body
-        )}
+            </motion.div>,
+            document.body,
+          )}
+      </AnimatePresence>
     </>
   );
 };
@@ -248,65 +265,161 @@ const ColumnFilterMenu = ({
 /* ==========================================================
    📊 Statistics Component (Main)
    ========================================================== */
-const Statistics = () => {
-  const [currentRange, setCurrentRange] = useState({
+const Statistics = ({ getListOfCampaigns }) => {
+  const DEFAULT_TIME_RANGE = {
     startDate: subWeeks(new Date(), 1),
     endDate: new Date(),
     label: "Last week",
-  });
-
+  };
+  const [currentRange, setCurrentRange] = useState(DEFAULT_TIME_RANGE);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
-  const totalItems = 648758;
+  const [totalItems, setTotalItems] = useState(0);
   const totalPages = Math.ceil(totalItems / pageSize);
-
-  const openDetails = {
-    "Unique Opens": "4590.00",
-    "Unique Open Rate": "13.73%",
-    "Total Opens": "6690.00",
-    "Total Open Rate": "20.01%",
+  const [tableData, setTableData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [resetKey, setResetKey] = useState(0);
+  const formatDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   };
 
-  const clickDetails = {
-    "Unique Clicks": "1471.00",
-    "Unique Click Rate": "0.30%",
-    "Total Clicks": "2753.00",
-    "Total Click Rate": "0.56%",
+  const handleReset = () => {
+    setCurrentRange(DEFAULT_TIME_RANGE);
+
+    setPage(1);
+    setPageSize(25);
+
+    setTableData([]);
+    setResetKey((k) => k + 1); // 🔑 FORCE calendar reset
+
+    // 🔁 Force API call AFTER state updates
+    setTimeout(() => {
+      handleSearch();
+    }, 0);
+  };
+
+  const handleRangeChange = (
+    startDate: Date | null,
+    endDate: Date | null,
+    label: string,
+  ) => {
+    if (!startDate || !endDate) return;
+
+    setCurrentRange({
+      startDate,
+      endDate,
+      label,
+    });
+
+    setPage(1); // reset pagination on date change
   };
 
   const allColumns = [
     { key: "date", label: "Date" },
     { key: "campaignId", label: "Campaign ID" },
     { key: "sent", label: "Sent" },
+    { key: "delivered", label: "Delivered" }, // ✅ ADDED
     { key: "open", label: "Open" },
     { key: "click", label: "Click" },
+    { key: "bounce", label: "Bounce" }, // ✅ ADDED
   ];
   const [visibleColumns, setVisibleColumns] = useState<string[]>(
-    allColumns.map((c) => c.key)
+    allColumns.map((c) => c.key),
   );
+  const handleSearch = () => {
+    const payload = {
+      page_no: page,
+      page_size: pageSize,
+      from_date: formatDate(currentRange.startDate),
+      to_date: formatDate(currentRange.endDate),
+    };
 
-  const data = [
-    {
-      date: "2025-10-24",
-      campaignId: "kcomputingsmtp251024",
-      sent: "492242",
-      open: (
-        <TooltipCell label="Open" value="256880" tooltipData={openDetails} />
-      ),
-      click: (
-        <TooltipCell label="Click" value="1471" tooltipData={clickDetails} />
-      ),
-    },
-    {
-      date: "2025-10-25",
-      campaignId: "kcomputingsmtp251025",
-      sent: "33427",
-      open: <TooltipCell label="Open" value="4590" tooltipData={openDetails} />,
-      click: (
-        <TooltipCell label="Click" value="90" tooltipData={clickDetails} />
-      ),
-    },
-  ];
+    setLoading(true);
+    console.log("📤 Request Payload:", payload);
+
+    getListOfCampaigns({
+      mail_class: "testdev",
+      payload,
+    })
+      .then((res: any) => {
+        console.log("✅ Campaign API Response:", res);
+
+        const apiData = res || {};
+        const apiTotal = res?.total_count ?? Object.keys(apiData).length;
+        const rows = Object.values(apiData).map((item: any) => {
+          const { stats, percentageStat } = item;
+
+          return {
+            date: stats.send_date,
+            campaignId: stats.send_id,
+
+            // ✅ SENT
+            sent: stats.submitted_count,
+
+            // ✅ DELIVERED (with fallback)
+            delivered:
+              stats.delivered_count ??
+              stats.submitted_count - stats.bounce_count,
+
+            // ✅ OPEN
+            open: (
+              <TooltipCell
+                label="Open"
+                value={stats.opened_count}
+                tooltipData={{
+                  "Unique Opens": stats.unique_open,
+                  "Unique Open Rate": `${percentageStat.unique_open_percentage}%`,
+                  "Total Opens": stats.opened_count,
+                  "Total Open Rate": `${percentageStat.total_open_percentage}%`,
+                }}
+              />
+            ),
+
+            // ✅ CLICK
+            click: (
+              <TooltipCell
+                label="Click"
+                value={stats.click_count}
+                tooltipData={{
+                  "Unique Clicks": stats.unique_click,
+                  "Unique Click Rate": `${percentageStat.unique_click_percentage}%`,
+                  "Total Clicks": stats.click_count,
+                  "Total Click Rate": `${percentageStat.total_click_percentage}%`,
+                }}
+              />
+            ),
+
+            // ✅ BOUNCE (with tooltip)
+            bounce: (
+              <TooltipCell
+                label="Bounce"
+                value={stats.bounce_count}
+                tooltipData={{
+                  "Hard Bounce": stats.bounce_details?.hard_bounce ?? 0,
+                  "Soft Bounce": stats.bounce_details?.soft_bounce ?? 0,
+                  "Other Bounce": stats.bounce_details?.other_bounce ?? 0,
+                  "Bad Address": stats.bounce_details?.bounce_bad_address ?? 0,
+                  "Total Bounce %": `${stats.bounce_details?.total_bounce_percent ?? 0}%`,
+                }}
+              />
+            ),
+          };
+        });
+
+        setTableData(rows);
+        setTotalItems(apiTotal);
+      })
+      .catch((err: any) => {
+        console.error("❌ Campaign API Error:", err);
+      })
+      .finally(() => setLoading(false));
+  };
+  useEffect(() => {
+    handleSearch();
+  }, [page, pageSize, currentRange]);
 
   return (
     <>
@@ -323,16 +436,22 @@ const Statistics = () => {
           </h2>
 
           <div className="flex justify-between items-center flex-wrap gap-4">
-            <TimeRangeDropdown onRangeChange={() => {}} />
+            <TimeRangeDropdown
+              key={`timerange-${resetKey}`}
+              onRangeChange={handleRangeChange}
+            />
+
             <div className="flex items-center gap-3">
               <button
-                className="px-5 py-2 rounded-md border border-[#0042E4] text-[#0042E4] 
-                hover:bg-[#0042E4] hover:text-white transition 
-                dark:border-[#3B82F6] dark:text-[#3B82F6] dark:hover:bg-[#3B82F6] dark:hover:text-white"
+                onClick={handleReset}
+                className="px-5 py-2 rounded-md border border-[#0042E4] 
+  text-[#0042E4] hover:bg-[#0042E4] hover:text-white transition 
+  dark:border-[#3B82F6] dark:text-[#3B82F6] dark:hover:bg-[#3B82F6] dark:hover:text-white"
               >
                 Reset
               </button>
-              <PrimaryButton label="Search" />
+
+              <PrimaryButton label="Search" onClick={handleSearch} />
             </div>
           </div>
         </div>
@@ -341,7 +460,7 @@ const Statistics = () => {
         <div className="overflow-x-auto bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm">
           <table className="min-w-full text-[15px] text-gray-800 dark:text-gray-100">
             <thead className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200">
-              <tr>
+              <motion.tr>
                 {allColumns
                   .filter((col) => visibleColumns.includes(col.key))
                   .map((col) => (
@@ -362,24 +481,51 @@ const Statistics = () => {
                     }
                   />
                 </th>
-              </tr>
+              </motion.tr>
             </thead>
-            <tbody>
-              {data.map((row, i) => (
-                <tr
-                  key={i}
-                  className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/60"
-                >
-                  {allColumns
-                    .filter((col) => visibleColumns.includes(col.key))
-                    .map((col) => (
-                      <td key={col.key} className="px-4 py-3">
-                        {row[col.key as keyof typeof row]}
-                      </td>
-                    ))}
-                </tr>
-              ))}
-            </tbody>
+            <AnimatePresence mode="wait">
+              <motion.tbody
+                variants={tableBodyVariants}
+                initial="hidden"
+                animate="visible"
+                exit="hidden"
+              >
+                {loading && (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-6 text-center">
+                      Loading campaigns…
+                    </td>
+                  </tr>
+                )}
+
+                {!loading && tableData.length === 0 && (
+                  <motion.tr>
+                    <td
+                      colSpan={6}
+                      className="px-4 py-6 text-center text-gray-500"
+                    >
+                      No data found
+                    </td>
+                  </motion.tr>
+                )}
+
+                {!loading &&
+                  tableData.map((row, i) => (
+                    <tr
+                      key={i}
+                      className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/60"
+                    >
+                      {allColumns
+                        .filter((col) => visibleColumns.includes(col.key))
+                        .map((col) => (
+                          <td key={col.key} className="px-4 py-3">
+                            {row[col.key as keyof typeof row]}
+                          </td>
+                        ))}
+                    </tr>
+                  ))}
+              </motion.tbody>
+            </AnimatePresence>
           </table>
         </div>
 
@@ -387,7 +533,7 @@ const Statistics = () => {
         <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
           <TablePaginationFooter
             currentPage={page}
-            totalPages={totalPages}
+            totalPages={Math.ceil(totalItems / pageSize)}
             totalItems={totalItems}
             pageSize={pageSize}
             onPageChange={setPage}
@@ -402,4 +548,8 @@ const Statistics = () => {
   );
 };
 
-export default Statistics;
+const mapDispatchToProps = (dispatch: any) => ({
+  getListOfCampaigns: (payload: any) => dispatch(getListOfCampaigns(payload)),
+});
+
+export default connect(null, mapDispatchToProps)(Statistics);
