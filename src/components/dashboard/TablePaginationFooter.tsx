@@ -52,8 +52,8 @@ const TablePaginationFooter: React.FC<TablePaginationFooterProps> = ({
               currentPage <= 3
                 ? i + 1
                 : currentPage >= totalPages - 2
-                ? totalPages - 4 + i
-                : currentPage - 2 + i;
+                  ? totalPages - 4 + i
+                  : currentPage - 2 + i;
 
             if (pageNum < 1 || pageNum > totalPages) return null;
 

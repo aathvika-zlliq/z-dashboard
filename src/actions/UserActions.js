@@ -37,6 +37,7 @@ export const postLoginData = (data) => (dispatch) => {
         payload: {
           user_id: result.user_id,
           account_id: result.account_id,
+          mail_class: result.mail_class,
           ...(result.user || {}),
         },
       });

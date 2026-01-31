@@ -4,6 +4,8 @@ import {
   SET_DASHBOARD_STATISTICS,
   SET_SEARCH_BY_SENDS,
   SET_LIST_OF_CAMPAIGNS,
+  RESET_EXPORT_REPORT,
+  SET_EXPORT_REPORT,
 } from "../store/actions";
 
 import Api1 from "../utils/api1";
@@ -103,3 +105,43 @@ export const getListOfCampaigns =
         dispatch({ type: LOADING_STOP });
       });
   };
+
+export const sendEmailDirect =
+  ({ apiUrl, payload }) =>
+  (dispatch) => {
+    dispatch({ type: LOADING_START });
+
+    return Api1() // 👈 no BASE_URL used
+      .post(apiUrl, payload)
+      .then((result) => {
+        return result; // return response to caller
+      })
+      .catch((err) => Promise.reject(err))
+      .finally(() => {
+        dispatch({ type: LOADING_STOP });
+      });
+  };
+export const generateExportReport = (payload) => (dispatch) => {
+  dispatch({ type: LOADING_START });
+
+  return Api1(BASE_URL)
+    .post("/smtp/export/generate_report", payload)
+    .then((result) => {
+      // ✅ If you want to store in redux, keep this
+      // otherwise you can remove this dispatch
+      dispatch({
+        type: SET_EXPORT_REPORT,
+        payload: result,
+      });
+
+      // ✅ Always return response to component
+      return result;
+    })
+    .catch((err) => Promise.reject(err))
+    .finally(() => {
+      dispatch({ type: LOADING_STOP });
+    });
+};
+export const resetExportReport = () => ({
+  type: RESET_EXPORT_REPORT,
+});

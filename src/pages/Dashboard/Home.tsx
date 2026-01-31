@@ -16,18 +16,28 @@ import { connect } from "react-redux";
 import { getDashboardStatistics } from "../../actions";
 import EmailMetrics from "../../components/ecommerce/EmailMetrics";
 
-const getISTGreeting = () => {
+const getISTGreeting = (firstName?: string) => {
   const now = new Date();
   const istHour =
     (now.getUTCHours() + 5 + Math.floor((30 + now.getUTCMinutes()) / 60)) % 24;
-  if (istHour < 12) return "Good Morning Naveen";
-  if (istHour < 18) return "Good Afternoon Naveen";
-  return "Good Evening Naveen";
+
+  const name = firstName || "there"; // 👈 safe fallback
+
+  if (istHour < 12) return `Good Morning ${name}`;
+  if (istHour < 18) return `Good Afternoon ${name}`;
+  return `Good Evening ${name}`;
 };
 
 const sectionSpacing = "my-4 md:my-5 lg:my-6";
 
-function Home({ dashboardStatistics, loading, getDashboardStatistics }) {
+function Home({
+  dashboardStatistics,
+  loading,
+  details,
+  userDetails,
+  getDashboardStatistics,
+}) {
+  console.log(userDetails.first_name);
   const [currentRange, setCurrentRange] = useState({
     startDate: subWeeks(new Date(), 1),
     endDate: new Date(),
@@ -169,8 +179,8 @@ function Home({ dashboardStatistics, loading, getDashboardStatistics }) {
           className={`${sectionSpacing} grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-5 items-center`}
         >
           <div className="md:col-span-12 flex flex-col md:flex-row md:items-center justify-between space-y-2 md:space-y-0">
-            <h1 className="text-3xl md:text-5xl font-normal text-gray-900 dark:text-gray-100">
-              {getISTGreeting()}!
+            <h1 className="text-3xl md:text-3xl font-normal text-gray-900 dark:text-gray-100">
+              {getISTGreeting(userDetails?.first_name)}
             </h1>
 
             <div className="flex items-center space-x-3">
@@ -257,6 +267,8 @@ function Home({ dashboardStatistics, loading, getDashboardStatistics }) {
 const mapStateToProps = (state: any) => ({
   dashboardStatistics: state.dashboardReducer.statistics,
   loading: state.dashboardReducer.loading,
+  details: state.userDetailsReducer.details,
+  userDetails: state.userDetailsReducer.details,
 });
 
 const mapDispatchToProps = (dispatch: any) => ({
